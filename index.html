@@ -971,17 +971,20 @@
               <div style="font-size: 0.65rem; color: #aaa; text-align: center; text-transform: uppercase;">📸 Cat-Cam Viewfinder</div>
               <!-- Camera display window -->
               <div style="border: 2px solid #555; background: #111; border-radius: 12px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                <!-- Live viewfinder preview -->
+                <div id="phone-cam-preview-box" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 1; pointer-events: none;"></div>
+                
                 <!-- Autofocus reticle -->
-                <div style="position: absolute; width: 40px; height: 40px; border: 2px dashed #4caf50; border-radius: 50%; opacity: 0.7; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; width: 40px; height: 40px; border: 2px dashed #4caf50; border-radius: 50%; opacity: 0.7; display: flex; align-items: center; justify-content: center; z-index: 2;">
                   <span style="font-size: 0.6rem; color: #4caf50;">+</span>
                 </div>
                 <!-- Snapshot details labels -->
-                <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; text-align: left; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem;">
+                <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; text-align: left; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem; z-index: 2; box-sizing: border-box;">
                   <span style="display:block; font-weight:800; color:#ffd54f;">ROOM: <span id="phone-cam-room" style="color:#fff;">Living Room</span></span>
                   <span style="display:block; font-weight:800; color:#ffd54f;">CATS: <span id="phone-cam-cats" style="color:#fff;">Luna & Leo</span></span>
                 </div>
                 <!-- Shutter Flash effect -->
-                <div id="phone-cam-flash" style="position: absolute; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none; transition: opacity 0.15s ease;"></div>
+                <div id="phone-cam-flash" style="position: absolute; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none; transition: opacity 0.15s ease; z-index: 3;"></div>
               </div>
               <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <button id="phone-cam-shutter" style="width: 55px; height: 55px; border-radius: 50%; background: #e53935; border: 4px solid #fff; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 1.5rem; display: flex; align-items: center; justify-content: center; outline: none;">📸</button>
@@ -1500,6 +1503,37 @@
             <button id="collect-cookies-btn" class="btn primary-btn" style="font-size:0.7rem; padding:8px 12px; background:var(--accent-gold); border-color:#ffa726; color:#fff; font-weight:bold; border-radius:10px;">
               Get Cookies 🍪
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTO LIGHTBOX MODAL -->
+    <div class="modal-overlay" id="photo-lightbox-modal">
+      <div class="glass-card modal-content" style="max-width: 440px; width: 95%; background: #fbf8f3; border-radius: 20px; padding: 18px; box-shadow: var(--glass-shadow); border: 2px solid var(--text-dark);">
+        <header class="modal-header" style="border-bottom: 1px solid rgba(141,110,99,0.15); padding-bottom: 8px; margin-bottom: 12px;">
+          <h2 style="font-family: var(--display-font); font-weight: 800; font-size:1.15rem; color: var(--text-dark); display:flex; align-items:center; gap:6px;">🖼️ Polaroid Memory</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:14px; align-items:center; text-align:center;">
+          <!-- Polaroid Picture Box -->
+          <div style="background: white; border: 1px solid #cfd8dc; border-radius: 12px; padding: 10px 10px 30px 10px; width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,0.08); display:flex; flex-direction:column; gap:12px; box-sizing: border-box;">
+            <!-- Viewport container -->
+            <div id="lightbox-photo-render" style="width: 100%; height: 210px; background: #000; border-radius: 8px; overflow: hidden; position: relative; border: 1.5px solid #90a4ae; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+              <!-- Cloned photo HTML preview goes here -->
+            </div>
+            <!-- Handwritten Memo Caption -->
+            <div style="text-align: left; padding: 0 4px;">
+              <strong id="lightbox-photo-cats" style="font-family: var(--display-font); font-size: 0.95rem; color: #3e2723; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Luna & Leo</strong>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+                <span id="lightbox-photo-room" style="font-size:0.68rem; color:#8d6e63; font-weight:700; text-transform:uppercase;">🛋️ LIVING ROOM</span>
+                <span id="lightbox-photo-date" style="font-size:0.62rem; color:#78909c; font-style:italic;">Yr 1, Day 12 of Meow-rch</span>
+              </div>
+            </div>
+          </div>
+          <!-- Description Note -->
+          <div id="lightbox-photo-desc" style="background:#fffaf0; border:1px solid #ffe0b2; color:#b78103; font-size:0.75rem; padding:8px 12px; border-radius:10px; width:100%; min-height:36px; display:flex; align-items:center; justify-content:center; box-sizing: border-box;">
+            "A lovely memory snapped at sweet home!"
           </div>
         </div>
       </div>

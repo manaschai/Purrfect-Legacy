@@ -1736,6 +1736,11 @@ function renderRoomScene() {
       });
     }
   }
+
+  const camView = document.getElementById('phone-view-cam');
+  if (camView && camView.style.display === 'flex') {
+    updateCameraViewfinder();
+  }
 }
 
 function switchRoom(roomName) {
@@ -3598,6 +3603,7 @@ function switchPhoneView(viewId) {
       const list = (currentRoom === 'back-room') ? state.data.retiredCats.map(c => c.name) : (state.data.doorOpen || currentRoom !== 'phone-room' ? state.data.activeCats.map(c => c.name) : []);
       cLabel.textContent = list.length > 0 ? list.join(' & ') : 'NO CATS IN ROOM';
     }
+    updateCameraViewfinder();
   } else if (viewId === 'gallery') {
     renderPhoneGallery();
   } else if (viewId === 'bank') {
@@ -3891,6 +3897,36 @@ function performMeowgleSearch(query) {
 }
 // --- CAMERA & GALLERY & SETTINGS APP IMPLEMENTATION ---
 
+function updateCameraViewfinder() {
+  const container = document.getElementById('phone-cam-preview-box');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const playSpace = document.getElementById('play-space-container');
+  if (!playSpace) return;
+  
+  const clone = playSpace.cloneNode(true);
+  
+  // Clean up unwanted absolute elements/overlays
+  const allergy = clone.querySelector('#allergy-meter-card');
+  if (allergy) allergy.remove();
+  const farmSign = clone.querySelector('#backroom-farm-sign');
+  if (farmSign) farmSign.remove();
+  
+  // Style scaled container wrapper
+  clone.style.position = 'absolute';
+  clone.style.width = '580px';
+  clone.style.height = '340px';
+  clone.style.transform = 'scale(0.42)';
+  clone.style.transformOrigin = 'center center';
+  clone.style.pointerEvents = 'none';
+  clone.style.borderRadius = '8px';
+  clone.style.overflow = 'hidden';
+  clone.style.boxShadow = 'none';
+  
+  container.appendChild(clone);
+}
+
 // Camera Shutter click handler
 document.getElementById('phone-cam-shutter').addEventListener('click', () => {
   const flash = document.getElementById('phone-cam-flash');
@@ -3910,11 +3946,15 @@ document.getElementById('phone-cam-shutter').addEventListener('click', () => {
   }
   const catList = (currentRoom === 'back-room') ? state.data.retiredCats.map(c => c.name) : (state.data.doorOpen || currentRoom !== 'phone-room' ? state.data.activeCats.map(c => c.name) : []);
   
+  const previewBox = document.getElementById('phone-cam-preview-box');
+  const previewHtml = previewBox ? previewBox.innerHTML : '';
+
   const photo = {
     id: 'photo_' + Date.now(),
     date: `Yr ${state.data.calendarYear}, Day ${state.data.calendarDay} of ${CALENDAR_MONTHS[state.data.calendarMonth]}`,
     room: roomFriendly,
     cats: catList.length > 0 ? catList.join(' & ') : 'Empty room',
+    previewHtml: previewHtml,
     description: `A lovely memory snapped in the ${roomFriendly.toLowerCase()}!`
   };
   
@@ -3960,14 +4000,28 @@ function renderPhoneGallery() {
     polaroid.style.display = 'flex';
     polaroid.style.alignItems = 'center';
     polaroid.style.justifyContent = 'center';
-    polaroid.style.fontSize = '1.3rem';
-    
-    let emoji = '🏠';
-    if (photo.room.includes('BATH')) emoji = '🛁';
-    else if (photo.room.includes('SCHOOL')) emoji = '🏫';
-    else if (photo.room.includes('STUDY')) emoji = '🚪';
-    else if (photo.room.includes('BACK')) emoji = '🛋️';
-    polaroid.textContent = emoji;
+    polaroid.style.overflow = 'hidden';
+    polaroid.style.position = 'relative';
+
+    if (photo.previewHtml) {
+      const thumbWrapper = document.createElement('div');
+      thumbWrapper.style.cssText = "position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; pointer-events: none;";
+      thumbWrapper.innerHTML = photo.previewHtml;
+      const innerChild = thumbWrapper.firstElementChild;
+      if (innerChild) {
+        innerChild.style.transform = "scale(0.19)";
+        innerChild.style.transformOrigin = "center center";
+      }
+      polaroid.appendChild(thumbWrapper);
+    } else {
+      polaroid.style.fontSize = '1.3rem';
+      let emoji = '🏠';
+      if (photo.room.includes('BATH')) emoji = '🛁';
+      else if (photo.room.includes('SCHOOL')) emoji = '🏫';
+      else if (photo.room.includes('STUDY')) emoji = '🚪';
+      else if (photo.room.includes('BACK')) emoji = '🛋️';
+      polaroid.textContent = emoji;
+    }
     
     card.appendChild(polaroid);
 
@@ -4016,7 +4070,36 @@ function renderPhoneGallery() {
     
     card.onclick = () => {
       audio.playPhoneTone(440, 480, 0.05);
-      alert(`📸 Polaroid Memo:\n\n📅 Date: ${photo.date}\n📍 Room: ${photo.room}\n🐈 Cats: ${photo.cats}\n\n"${photo.description}"`);
+      
+      const lightbox = document.getElementById('photo-lightbox-modal');
+      const renderBox = document.getElementById('lightbox-photo-render');
+      const catsEl = document.getElementById('lightbox-photo-cats');
+      const roomEl = document.getElementById('lightbox-photo-room');
+      const dateEl = document.getElementById('lightbox-photo-date');
+      const descEl = document.getElementById('lightbox-photo-desc');
+
+      if (lightbox && renderBox && catsEl && roomEl && dateEl && descEl) {
+        catsEl.textContent = photo.cats;
+        roomEl.textContent = `📍 ${photo.room}`;
+        dateEl.textContent = photo.date;
+        descEl.textContent = `"${photo.description}"`;
+        
+        if (photo.previewHtml) {
+          renderBox.innerHTML = photo.previewHtml;
+          const child = renderBox.firstElementChild;
+          if (child) {
+            child.style.transform = 'scale(0.68)';
+            child.style.transformOrigin = 'center center';
+          }
+        } else {
+          renderBox.innerHTML = `
+            <div style="font-size: 3rem;">🏠</div>
+            <div style="font-size: 0.65rem; color: #757575; margin-top: 8px;">No image capture available</div>
+          `;
+        }
+        
+        lightbox.classList.add('active');
+      }
     };
 
     container.appendChild(card);
