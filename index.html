@@ -551,6 +551,19 @@
               </div>
             </div>
 
+            <!-- Signpost to Grandparents' Farm (only shown in Back Room) -->
+            <div id="backroom-farm-sign" style="position: absolute; bottom: 5px; right: 20px; width: 65px; height: 60px; cursor: pointer; z-index: 3; display: none;" title="Take a trip to Grandparents' Farmhouse!">
+              <svg viewBox="0 0 60 65" width="100%" height="100%">
+                <!-- Signpost Pole -->
+                <rect x="27" y="25" width="6" height="40" fill="#a1887f" />
+                <!-- Signboard -->
+                <rect x="5" y="8" width="50" height="20" rx="3" fill="#8d6e63" stroke="#5d4037" stroke-width="2" />
+                <text x="30" y="20" font-size="7" font-weight="bold" text-anchor="middle" fill="#fff">🏡 FARM</text>
+                <!-- Bus Icon -->
+                <text x="30" y="45" font-size="12" text-anchor="middle">🚌</text>
+              </svg>
+            </div>
+
             <!-- Background room decorators can render here -->
             <div class="room-background-scene" id="room-scene">
               <!-- Active Room scene styling -->
@@ -1095,6 +1108,13 @@
                     <text x="230" y="133" font-size="7" text-anchor="middle" fill="#fff">🐟</text>
                     <text x="230" y="117" font-size="5" font-weight="bold" text-anchor="middle" fill="#e65100">MARKET</text>
                   </g>
+
+                  <!-- Point 6: Grandparents Farm 🏡 -->
+                  <g class="map-node" data-loc="farm" style="cursor:pointer;">
+                    <circle cx="150" cy="140" r="10" fill="#81c784" stroke="#fff" stroke-width="1.5" />
+                    <text x="150" y="143" font-size="7" text-anchor="middle" fill="#fff">🏡</text>
+                    <text x="150" y="127" font-size="5" font-weight="bold" text-anchor="middle" fill="#2e7d32">FARM</text>
+                  </g>
                 </svg>
               </div>
 
@@ -1364,6 +1384,90 @@
               <button id="accessory-remove-btn" class="btn secondary-btn" style="flex:1; font-size:0.85rem; padding:8px;">Remove</button>
               <button id="accessory-equip-btn" class="btn primary-btn" style="flex:1.2; font-size:0.85rem; padding:8px; background:var(--accent-pink); color:#fff; border-color:var(--accent-pink);">Equip Outfits</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARENT INTERACTION MODAL -->
+    <div class="modal-overlay" id="parent-interaction-modal">
+      <div class="glass-card modal-content" style="max-width: 420px; width: 95%;">
+        <header class="modal-header">
+          <h2 id="parent-modal-title">🐱 Interact with Parent</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:16px; align-items:center; text-align:center;">
+          <!-- Large Parent Avatar Preview -->
+          <div id="parent-modal-avatar-box" style="width: 140px; height: 140px; background: linear-gradient(to bottom, #fffaf5, #f5efe6); border: 1px solid rgba(141,110,99,0.15); border-radius: 50%; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 2px 8px rgba(0,0,0,0.03);">
+            <!-- Parent SVG goes here -->
+          </div>
+          
+          <!-- Parent Stats info -->
+          <div>
+            <h3 id="parent-modal-name" style="font-family: var(--display-font); font-weight: 800; color: var(--text-dark); font-size:1.3rem;">Parent Name</h3>
+            <p id="parent-modal-generation" style="font-size:0.8rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-top:2px;">Generation 1</p>
+            <div id="parent-modal-degrees" style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:6px;">
+              <!-- Degree badges -->
+            </div>
+          </div>
+
+          <!-- Dialogue Bubble -->
+          <div id="parent-modal-dialogue" style="background:#fff3e0; border:1px solid #ffe0b2; color:#e65100; border-radius:12px; padding:10px 14px; font-size:0.85rem; width:100%; position:relative; min-height:48px; display:flex; align-items:center; justify-content:center; font-weight:500;">
+            "Click talk to hear my advice, my child!"
+          </div>
+
+          <!-- Action Grid -->
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; width:100%;">
+            <button class="btn secondary-btn" id="parent-talk-btn" style="padding:10px 4px; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:bold; border-radius:12px;">
+              <span>💬</span> Talk
+            </button>
+            <button class="btn secondary-btn" id="parent-treat-btn" style="padding:10px 4px; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:bold; border-radius:12px; background:#fff8e1; border-color:#ffe082;">
+              <span>🐟</span> Treat (-5🪙)
+            </button>
+            <button class="btn secondary-btn" id="parent-groom-btn" style="padding:10px 4px; font-size:0.75rem; display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:bold; border-radius:12px;">
+              <span>🪮</span> Groom
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRANDPARENTS FARMHOUSE TRIP MODAL -->
+    <div class="modal-overlay" id="grandparents-farm-modal">
+      <div class="glass-card modal-content" style="max-width: 650px; width: 95%; height: 90%; display:flex; flex-direction:column; padding:16px;">
+        <header class="modal-header">
+          <h2>🏡 Grandparents' Country Farm</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body" style="flex:1; display:flex; flex-direction:column; gap:12px; overflow:hidden;">
+          
+          <!-- Farm Play Field -->
+          <div id="farm-play-field" style="flex:1; border-radius:20px; border:2px solid #a1887f; background: linear-gradient(to bottom, #bbdefb 0%, #c8e6c9 70%, #81c784 100%); position:relative; overflow:hidden; box-shadow: inset 0 6px 15px rgba(0,0,0,0.1);">
+            <!-- Cozy Farm background elements (clouds, barn, fence) -->
+            <div style="position:absolute; top:25px; left:40px; font-size:1.5rem; opacity:0.8; pointer-events:none;">☁️</div>
+            <div style="position:absolute; top:12px; right:60px; font-size:2rem; opacity:0.8; pointer-events:none;">☁️</div>
+            <div style="position:absolute; bottom:25px; left:25px; font-size:2.8rem; line-height:1; z-index:1; pointer-events:none;">🏡</div>
+            <div style="position:absolute; bottom:15px; right:40px; font-size:1.5rem; z-index:1; pointer-events:none;">🌳</div>
+            <div style="position:absolute; bottom:10px; left:0; width:100%; border-top: 3px dashed rgba(255,255,255,0.4); z-index:1; pointer-events:none;"></div>
+            
+            <!-- Grandparents & Ancestor Cats render container -->
+            <div id="farm-cats-container" style="position:absolute; width:100%; height:100%; top:0; left:0; z-index:2;">
+              <!-- Grandparents will be dynamically rendered here -->
+            </div>
+          </div>
+
+          <!-- Grandma's Baking House Panel -->
+          <div style="background:#fffbf0; border:1px solid #ffe0b2; border-radius:16px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px; box-shadow:0 3px 8px rgba(0,0,0,0.03);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:1.8rem;">🍪</span>
+              <div style="text-align:left;">
+                <strong style="font-size:0.75rem; color:#e65100; font-family:var(--display-font);">Grandma Cookie's Bake House</strong>
+                <p style="font-size:0.6rem; color:var(--text-muted); line-height:1.2;">Visit Grandma Cookie once a trip to collect a delicious batch of warm Catnip Cookies!</p>
+              </div>
+            </div>
+            <button id="collect-cookies-btn" class="btn primary-btn" style="font-size:0.7rem; padding:8px 12px; background:var(--accent-gold); border-color:#ffa726; color:#fff; font-weight:bold; border-radius:10px;">
+              Get Cookies 🍪
+            </button>
           </div>
         </div>
       </div>

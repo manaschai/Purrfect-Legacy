@@ -1695,8 +1695,7 @@ function renderRoomScene() {
       wrapper.innerHTML = renderCatSVG(cat);
       
       wrapper.onclick = () => {
-        audio.playPurr();
-        showToast(`${cat.name} is resting happily in retirement.`);
+        openParentInteractionModal(cat);
       };
       
       catsArea.appendChild(wrapper);
@@ -1786,6 +1785,11 @@ function switchRoom(roomName) {
     document.getElementById('room-interactive-items').style.display = 'none';
     const danderHaze = document.getElementById('dander-haze');
     if (danderHaze) danderHaze.style.display = 'none';
+  }
+
+  const farmSign = document.getElementById('backroom-farm-sign');
+  if (farmSign) {
+    farmSign.style.display = (roomName === 'back-room') ? 'block' : 'none';
   }
 
   renderRoomScene();
@@ -3301,6 +3305,7 @@ function finishDrivingGame() {
 
 document.getElementById('driving-finish-btn').addEventListener('click', () => {
   if (drivingJoyrideTarget) {
+    const isFarm = drivingJoyrideTarget.includes("Farm") || drivingJoyrideTarget.includes("Grandparents");
     state.data.coins += 15;
     state.saveProfiles();
     updateHeaderStats();
@@ -3309,6 +3314,11 @@ document.getElementById('driving-finish-btn').addEventListener('click', () => {
     drivingJoyrideTarget = null;
     
     Views.switch('game-screen');
+    if (isFarm) {
+      setTimeout(() => {
+        openGrandparentsFarmModal();
+      }, 500);
+    }
     return;
   }
 
@@ -4078,6 +4088,11 @@ const MAPS_LOCATIONS = {
     name: '🐟 Central Fish Market & Store',
     desc: 'Market to spend Cat Coins on Glacier Water, soft slicker brushes, automatic robotic vacuum clean devices.',
     traffic: 'Busy (Salmon price stable)'
+  },
+  farm: {
+    name: "🏡 Grandparents' Country Farm",
+    desc: "A wide grass field and cozy red farmhouse. Your ancestors, grandparents, and old generations rest here happily, baking cookies.",
+    traffic: "Isolated Country Roads (Open Skies)"
   }
 };
 
@@ -4481,6 +4496,221 @@ if (tvFurnitureNode) {
     showToast(`TV Channel Switched! 📺`);
   });
 }
+
+// --- PARENT & GRANDPARENT INTERACTIONS ---
+
+const PARENT_DIALOGUES = [
+  "Back in my day, we only had 50 Cat Coins to start with!",
+  "Have you graduated from Cat School yet? I got my BS in Cat-culus!",
+  "Don't forget to deposit your savings in the Cat-Bank, interest compounds daily!",
+  "I'm proud of how you're running the playroom, my kitten!",
+  "Make sure to vacuum the bedroom, the dander gets dusty!",
+  "Always follow your dreams, little one. And get plenty of sleep!",
+  "Salmon is my favorite. If you ever have extra coins, you know what to do!",
+  "Keep grooming your fur, it keeps the static electricity away!"
+];
+
+let selectedParentCat = null;
+
+function openParentInteractionModal(cat) {
+  selectedParentCat = cat;
+  
+  const modal = document.getElementById('parent-interaction-modal');
+  const avatarBox = document.getElementById('parent-modal-avatar-box');
+  const nameEl = document.getElementById('parent-modal-name');
+  const genEl = document.getElementById('parent-modal-generation');
+  const degreesBox = document.getElementById('parent-modal-degrees');
+  const dialogueEl = document.getElementById('parent-modal-dialogue');
+  
+  if (avatarBox) avatarBox.innerHTML = renderCatSVG(cat);
+  if (nameEl) nameEl.textContent = cat.name;
+  if (genEl) genEl.textContent = `Generation ${cat.generation || 1}`;
+  
+  if (degreesBox) {
+    degreesBox.innerHTML = '';
+    const degree = cat.degree || (cat.status === 'studying' ? 'Enrolled' : 'None');
+    if (degree && degree !== 'None') {
+      const badge = document.createElement('span');
+      badge.style.cssText = "background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9; border-radius:6px; font-size:0.6rem; padding:2px 6px; font-weight:800;";
+      badge.textContent = `🎓 ${degree}`;
+      degreesBox.appendChild(badge);
+    }
+    if (cat.trait) {
+      const traitBadge = document.createElement('span');
+      traitBadge.style.cssText = "background:#f3e5f5; color:#6a1b9a; border:1px solid #e1bee7; border-radius:6px; font-size:0.6rem; padding:2px 6px; font-weight:800;";
+      traitBadge.textContent = `🌟 ${cat.trait}`;
+      degreesBox.appendChild(traitBadge);
+    }
+  }
+  
+  if (dialogueEl) {
+    const randomDialogue = PARENT_DIALOGUES[Math.floor(Math.random() * PARENT_DIALOGUES.length)];
+    dialogueEl.textContent = `"${randomDialogue}"`;
+  }
+  
+  modal.classList.add('active');
+}
+
+// Bind Parent Buttons
+document.getElementById('parent-talk-btn').addEventListener('click', (event) => {
+  if (!selectedParentCat) return;
+  audio.playMeow(1.0);
+  const dialogueEl = document.getElementById('parent-modal-dialogue');
+  if (dialogueEl) {
+    const randomDialogue = PARENT_DIALOGUES[Math.floor(Math.random() * PARENT_DIALOGUES.length)];
+    dialogueEl.textContent = `"${randomDialogue}"`;
+  }
+  createFloater(event.clientX || window.innerWidth/2, event.clientY || window.innerHeight/2, "❤️");
+});
+
+document.getElementById('parent-treat-btn').addEventListener('click', (event) => {
+  if (!selectedParentCat) return;
+  if (state.data.coins < 5) {
+    showToast("Not enough coins to buy a treat!");
+    return;
+  }
+  
+  state.data.coins -= 5;
+  state.data.trustLevel = (state.data.trustLevel || 1) + 2;
+  state.saveProfiles();
+  updateHeaderStats();
+  
+  audio.playPurr();
+  const dialogueEl = document.getElementById('parent-modal-dialogue');
+  if (dialogueEl) {
+    dialogueEl.textContent = `"Oh, delicious salmon! Thank you, my child! I feel so loved."`;
+  }
+  showToast("Fed parent a treat! Trust Level boosted! +2 XP");
+  createFloater(event.clientX || window.innerWidth/2, event.clientY || window.innerHeight/2, "✨🐟✨");
+});
+
+document.getElementById('parent-groom-btn').addEventListener('click', (event) => {
+  if (!selectedParentCat) return;
+  audio.playPurr();
+  const dialogueEl = document.getElementById('parent-modal-dialogue');
+  if (dialogueEl) {
+    dialogueEl.textContent = `"Ah, that brush feels amazing. Brushing out static electricity..."`;
+  }
+  createFloater(event.clientX || window.innerWidth/2, event.clientY || window.innerHeight/2, "🪮💕");
+});
+
+// --- GRANDPARENTS FARMHOUSE LOGIC ---
+
+const GRANDPA_DIALOGUES = [
+  "Welcome to the farm, youngster! Grab a seat on the porch.",
+  "In my time, we didn't have smart TVs. We watched real birds outside!",
+  "A healthy mind starts with a healthy catnap. Don't rush through life.",
+  "I'm so proud of your parents, and I'm proud of you too!",
+  "Always keep some coins saved up, you never know when you'll need cardboard!"
+];
+
+const GRANDMA_DIALOGUES = [
+  "Oh look at my sweet kitten! Let me pinch those cheeks!",
+  "Make sure you're eating enough, dear. I just baked a batch of catnip cookies!",
+  "Family is the greatest treasure in the world. Stick together!",
+  "Grandpa is napping, but I'm here to give you all the hugs!",
+  "Groom your coat daily to keep the dust bunnies away."
+];
+
+function openGrandparentsFarmModal() {
+  const modal = document.getElementById('grandparents-farm-modal');
+  const catsContainer = document.getElementById('farm-cats-container');
+  if (!catsContainer) return;
+  
+  catsContainer.innerHTML = '';
+  
+  const currentGen = state.data.currentGeneration || 1;
+  const ancestorCats = (state.data.familyTree || []).filter(c => {
+    const gen = c.generation !== undefined ? c.generation : 1;
+    return gen < (currentGen - 1);
+  });
+  
+  let catsToRender = [];
+  if (ancestorCats.length > 0) {
+    catsToRender = ancestorCats;
+  } else {
+    catsToRender = [
+      {
+        name: "Grandpa Whiskers",
+        gender: "male",
+        color: "grey",
+        pattern: "tabby",
+        eyeColor: "green",
+        accessory: "glasses",
+        generation: 0,
+        dialogues: GRANDPA_DIALOGUES
+      },
+      {
+        name: "Grandma Cookie",
+        gender: "female",
+        color: "orange",
+        pattern: "calico",
+        eyeColor: "blue",
+        accessory: "scarf",
+        generation: 0,
+        dialogues: GRANDMA_DIALOGUES
+      }
+    ];
+  }
+  
+  catsToRender.forEach((cat, idx) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cat-avatar-wrapper';
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = `${20 + idx * 28}%`;
+    wrapper.style.bottom = `${15 + (idx % 2) * 15}px`;
+    wrapper.style.cursor = 'pointer';
+    wrapper.style.zIndex = '10';
+    wrapper.innerHTML = renderCatSVG(cat);
+    
+    wrapper.onclick = (event) => {
+      audio.playMeow(0.9);
+      const dialogues = cat.dialogues || [
+        `"Welcome to the farmhouse! Generation ${cat.generation} rules!"`,
+        `"It's so wonderful of you to make a trip to visit us elders!"`,
+        `"Keep up the good work in the playroom!"`
+      ];
+      const randomDialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+      showToast(`${cat.name}: "${randomDialogue}"`);
+      createFloater(event.clientX, event.clientY, "💬👵");
+    };
+    
+    catsContainer.appendChild(wrapper);
+  });
+  
+  modal.classList.add('active');
+}
+
+// Bind Signpost click
+document.getElementById('backroom-farm-sign').addEventListener('click', () => {
+  audio.playPhoneTone(440, 480, 0.05);
+  openGrandparentsFarmModal();
+});
+
+// Grandma Cookies Bake Button
+document.getElementById('collect-cookies-btn').addEventListener('click', (event) => {
+  const todayKey = `${state.data.calendarYear || 1}_${state.data.calendarMonth || 0}_${state.data.calendarDay || 1}`;
+  if (state.data.lastCookieCollectedDay === todayKey) {
+    showToast("Grandma Cookie: 'I'm baking more cookies for tomorrow, dear! Come back then!' 🍪");
+    return;
+  }
+  
+  state.data.lastCookieCollectedDay = todayKey;
+  
+  state.data.activeCats.forEach(cat => {
+    cat.affection = 100;
+    cat.energy = 100;
+  });
+  
+  state.saveProfiles();
+  updateHeaderStats();
+  renderFocusCatDetails();
+  renderRoomScene();
+  
+  audio.playPurr();
+  showToast("Collected Grandma Cookie's fresh Catnip Cookies! All active cats' Energy & Affection restored to 100%!");
+  createFloater(event.clientX, event.clientY, "🍪💖✨");
+});
 
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
