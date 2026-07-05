@@ -1806,11 +1806,7 @@ function switchRoom(roomName) {
     }
   }
 
-  if (roomName !== 'phone-room') {
-    document.getElementById('room-interactive-items').style.display = 'none';
-    const danderHaze = document.getElementById('dander-haze');
-    if (danderHaze) danderHaze.style.display = 'none';
-  }
+  adjustRoomFurnitureVisibility(roomName);
 
   const farmSign = document.getElementById('backroom-farm-sign');
   if (farmSign) {
@@ -1824,6 +1820,7 @@ function switchRoom(roomName) {
     playContainer.classList.remove('vacation-style');
   }
 
+  updateBedroomFurnitureUI();
   renderRoomScene();
 }
 
@@ -4367,6 +4364,99 @@ if (searchGoBtn && searchInputBar) {
   });
 }
 
+function adjustRoomFurnitureVisibility(roomName) {
+  const container = document.getElementById('room-interactive-items');
+  const danderHaze = document.getElementById('dander-haze');
+  const allergyMeter = document.getElementById('allergy-meter-card');
+  
+  if (!container) return;
+
+  if (roomName === 'school') {
+    container.style.display = 'none';
+    if (danderHaze) danderHaze.style.display = 'none';
+    if (allergyMeter) allergyMeter.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  // Toggle specific furniture elements
+  const door = document.getElementById('interactive-door');
+  const clock = document.getElementById('bedroom-furniture-clock');
+  const tv = document.getElementById('bedroom-furniture-tv');
+  const lights = document.getElementById('bedroom-furniture-lights');
+  const shelf = document.getElementById('bedroom-furniture-shelf');
+  const window = document.getElementById('bedroom-furniture-window');
+  const rug = document.getElementById('bedroom-furniture-rug');
+  const bed = document.getElementById('bedroom-furniture-bed');
+  const nightstand = document.getElementById('bedroom-nightstand');
+  const lamp = document.getElementById('bedroom-furniture-lamp');
+  const phone = document.getElementById('interactive-phone');
+
+  // Helper to show/hide element safely
+  const setVisible = (el, yes) => {
+    if (el) el.style.display = yes ? 'block' : 'none';
+  };
+
+  if (roomName === 'phone-room') {
+    setVisible(door, true);
+    setVisible(clock, true);
+    setVisible(tv, true);
+    setVisible(lights, true);
+    setVisible(shelf, true);
+    setVisible(window, true);
+    setVisible(rug, true);
+    setVisible(bed, true);
+    setVisible(nightstand, true);
+    setVisible(lamp, true);
+    setVisible(phone, true);
+    if (danderHaze) danderHaze.style.display = 'block';
+    if (allergyMeter) allergyMeter.style.display = 'flex';
+  } else if (roomName === 'living-room') {
+    setVisible(door, false);
+    setVisible(clock, true);
+    setVisible(tv, true);
+    setVisible(lights, true);
+    setVisible(shelf, true);
+    setVisible(window, true);
+    setVisible(rug, true);
+    setVisible(bed, false);
+    setVisible(nightstand, false);
+    setVisible(lamp, true);
+    setVisible(phone, false);
+    if (danderHaze) danderHaze.style.display = 'none';
+    if (allergyMeter) allergyMeter.style.display = 'none';
+  } else if (roomName === 'back-room') {
+    setVisible(door, false);
+    setVisible(clock, false);
+    setVisible(tv, false);
+    setVisible(lights, true);
+    setVisible(shelf, true);
+    setVisible(window, true);
+    setVisible(rug, true);
+    setVisible(bed, false);
+    setVisible(nightstand, false);
+    setVisible(lamp, true);
+    setVisible(phone, false);
+    if (danderHaze) danderHaze.style.display = 'none';
+    if (allergyMeter) allergyMeter.style.display = 'none';
+  } else if (roomName === 'bath-area') {
+    setVisible(door, false);
+    setVisible(clock, false);
+    setVisible(tv, false);
+    setVisible(lights, true);
+    setVisible(shelf, false);
+    setVisible(window, true);
+    setVisible(rug, true); // bath mat!
+    setVisible(bed, false);
+    setVisible(nightstand, false);
+    setVisible(lamp, false);
+    setVisible(phone, false);
+    if (danderHaze) danderHaze.style.display = 'none';
+    if (allergyMeter) allergyMeter.style.display = 'none';
+  }
+}
+
 // --- BEDROOM CUSTOM FURNITURE DECORATION SYSTEM ---
 function updateBedroomFurnitureUI() {
   if (!state.data || !state.data.furniture) return;
@@ -5243,6 +5333,7 @@ window.onload = () => {
   if (state.activeProfile && state.profiles.includes(state.activeProfile)) {
     state.loadProfile(state.activeProfile);
     updateBedroomFurnitureUI();
+    adjustRoomFurnitureVisibility(currentRoom);
     updateWallClock();
     setInterval(updateWallClock, 1000);
     if (state.data.activeCats.length === 0) {
