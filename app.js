@@ -3605,9 +3605,14 @@ function populateChatContacts() {
 
 function initPhoneKids() {
   populateChatContacts();
+  renderPhoneHomeScreen();
 }
 
 function switchPhoneView(viewId) {
+  if (viewId !== 'cattube' && typeof cattubeVideoInterval !== 'undefined' && cattubeVideoInterval) {
+    clearInterval(cattubeVideoInterval);
+    cattubeVideoInterval = null;
+  }
   document.querySelectorAll('.phone-view').forEach(view => {
     view.style.display = 'none';
   });
@@ -3617,6 +3622,7 @@ function switchPhoneView(viewId) {
   }
 
   if (viewId === 'home') {
+    renderPhoneHomeScreen();
     const homeView = document.getElementById('phone-view-home');
     const wall = state.data.phoneWallpaper || 'blue';
     if (homeView) {
@@ -3673,6 +3679,16 @@ function switchPhoneView(viewId) {
     // Handled dynamically
   } else if (viewId === 'incomingcall' || viewId === 'activecall') {
     // Handled dynamically
+  } else if (viewId === 'play') {
+    updateMeowglePlayUI();
+  } else if (viewId === 'cattube') {
+    initCatTubeUI();
+  } else if (viewId === 'meowtify') {
+    initMeowtifyUI();
+  } else if (viewId === 'catfit') {
+    initCatFitUI();
+  } else if (viewId === 'cattitude') {
+    initCattitudeUI();
   }
 }
 
@@ -5759,6 +5775,379 @@ document.getElementById('phone-activecall-hangup-btn').addEventListener('click',
 setInterval(triggerRandomIncomingCall, 100000);
 
 
+// --- 🤖 APPS CONFIGURATION & DESKTOP SYSTEM ---
+
+const APPS_CONFIG = {
+  'dialer': { name: 'Dialer', icon: '📞', bg: '#4caf50' },
+  'chat': { name: 'Chat', icon: '💬', bg: '#2196f3' },
+  'cam': { name: 'Camera', icon: '📷', bg: '#9c27b0' },
+  'cathrome': { name: 'Browser', icon: '🌐', bg: '#e91e63' },
+  'meowzon': { name: 'Meow-zon', icon: '🛒', bg: '#ff9800' },
+  'gallery': { name: 'Gallery', icon: '🖼️', bg: '#009688' },
+  'bank': { name: 'Cat-Bank', icon: '💵', bg: '#3f51b5' },
+  'maps': { name: 'Cat-Maps', icon: '🌍', bg: '#00bcd4' },
+  'furnish': { name: 'Bed-Craft', icon: '🛋️', bg: '#e91e63' },
+  'collarmaker': { name: 'Collar Craft', icon: '📿', bg: '#673ab7' },
+  'play': { name: 'Meowgle Play', icon: '🤖', bg: '#607d8b' },
+  'cattube': { name: 'CatTube', icon: '📺', bg: '#f44336' },
+  'meowtify': { name: 'Meowtify', icon: '🎵', bg: '#1db954' },
+  'catfit': { name: 'CatFit', icon: '🏃', bg: '#ff5722' },
+  'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' }
+};
+
+const DOWNLOADABLE_APPS = [
+  { id: 'cattube', name: 'CatTube', desc: 'Watch squeaky mice and chirping bird videos made for kittens!', icon: '📺', bg: '#f44336' },
+  { id: 'meowtify', name: 'Meowtify', desc: 'Listen to soothing ambient tracks: deep purrs, rain, and chirping forest birds!', icon: '🎵', bg: '#1db954' },
+  { id: 'catfit', name: 'CatFit', desc: 'Track your kittens daily steps, calories burned, and active times!', icon: '🏃', bg: '#ff5722' },
+  { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' }
+];
+
+function renderPhoneHomeScreen() {
+  const grid = document.getElementById('phone-home-grid');
+  if (!grid || !state.data) return;
+  
+  if (!state.data.installedApps) {
+    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+  }
+  
+  grid.innerHTML = '';
+  state.data.installedApps.forEach(appId => {
+    const config = APPS_CONFIG[appId];
+    if (!config) return;
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = "display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px; height: 60px;";
+    
+    const btn = document.createElement('button');
+    btn.className = 'phone-app-btn';
+    btn.style.cssText = `background: ${config.bg}; color: white; border: none; border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.18); transition: transform 0.15s ease; padding:0; margin:0;`;
+    btn.textContent = config.icon;
+    
+    btn.addEventListener('click', () => {
+      audio.playPhoneTone(659, 784, 0.08);
+      switchPhoneView(appId);
+    });
+    
+    const span = document.createElement('span');
+    span.style.cssText = "font-size: 0.52rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%;";
+    span.textContent = config.name;
+    
+    wrapper.appendChild(btn);
+    wrapper.appendChild(span);
+    grid.appendChild(wrapper);
+  });
+}
+
+// --- 🤖 MEOWGLE PLAY APP STORE SYSTEM ---
+
+function updateMeowglePlayUI() {
+  const container = document.getElementById('meowgle-play-app-list');
+  if (!container || !state.data) return;
+  
+  if (!state.data.installedApps) {
+    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+  }
+
+  container.innerHTML = '';
+  DOWNLOADABLE_APPS.forEach(app => {
+    const installed = state.data.installedApps.includes(app.id);
+    
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #e0e0e0; border-radius: 12px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; justify-content: space-between; box-shadow: 0 1.5px 3px rgba(0,0,0,0.05);";
+    
+    card.innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; flex:1;">
+        <div style="width:36px; height:36px; border-radius:50%; background:${app.bg}; color:white; display:flex; align-items:center; justify-content:center; font-size:1.25rem;">${app.icon}</div>
+        <div style="display:flex; flex-direction:column; gap:2px; max-width:140px;">
+          <strong style="font-size:0.7rem; color:#2c3e50;">${app.name}</strong>
+          <span style="font-size:0.52rem; color:#7f8c8d; line-height:1.25;">${app.desc}</span>
+        </div>
+      </div>
+      <button class="btn install-action-btn" style="padding:4px 8px; font-size:0.55rem; font-weight:bold; border-radius:8px; border:none; color:white; cursor:pointer; min-width:65px; background:${installed ? '#e53935' : '#0288d1'};">
+        ${installed ? 'Uninstall' : 'Install'}
+      </button>
+    `;
+    
+    const actionBtn = card.querySelector('.install-action-btn');
+    actionBtn.onclick = () => {
+      if (installed) {
+        state.data.installedApps = state.data.installedApps.filter(id => id !== app.id);
+        showToast(`Uninstalled ${app.name} ❌`);
+      } else {
+        state.data.installedApps.push(app.id);
+        showToast(`Installed ${app.name} successfully! 📦✨`);
+      }
+      state.saveProfiles();
+      audio.playPhoneTone(880, 988, 0.15);
+      updateMeowglePlayUI();
+    };
+    
+    container.appendChild(card);
+  });
+}
+
+// --- 📺 CATTUBE VIDEO STREAMING SYSTEM ---
+
+const CATTUBE_VIDEOS = [
+  { id: 'mice', title: '🐭 10 Hours of Squeaky Mice Running', length: '10:00:00' },
+  { id: 'fish', title: '🐟 Satisfying Fish Tank Relax Loop', length: '04:15:30' },
+  { id: 'birds', title: '🐦 Backyard Bird Watching Live Feed', length: 'LIVE' },
+  { id: 'grooming', title: '🐈 Grooming Masterclass by Prof. Whisker', length: '12:45' }
+];
+
+let cattubeVideoInterval = null;
+let cattubeFrame = 0;
+
+function initCatTubeUI() {
+  const list = document.getElementById('cattube-video-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+  CATTUBE_VIDEOS.forEach(vid => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #eee; border-radius: 8px; padding: 6px; display: flex; gap: 8px; cursor: pointer; transition: background 0.2s;";
+    card.innerHTML = `
+      <div style="width: 55px; height: 35px; background: #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; color:#fff; position: relative;">
+        📺
+        <span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.75); color: #fff; font-size: 0.4rem; padding: 0.5px 3px; border-radius: 2px; font-weight: bold;">${vid.length}</span>
+      </div>
+      <div style="display: flex; flex-direction: column; justify-content: center; gap: 2px; flex: 1;">
+        <span style="font-size: 0.58rem; font-weight: bold; color: #2c3e50; line-height: 1.2;">${vid.title}</span>
+        <span style="font-size: 0.45rem; color: #95a5a6;">128k views • 2 days ago</span>
+      </div>
+    `;
+    
+    card.onclick = () => {
+      playCatTubeVideo(vid.id);
+    };
+    
+    list.appendChild(card);
+  });
+}
+
+function playCatTubeVideo(vidId) {
+  if (cattubeVideoInterval) clearInterval(cattubeVideoInterval);
+  cattubeFrame = 0;
+  
+  const player = document.getElementById('cattube-player-box');
+  if (!player) return;
+  
+  if (state.data && state.data.activeCats && state.data.activeCats[focusCatIndex]) {
+    const cat = state.data.activeCats[focusCatIndex];
+    cat.happy = Math.min(100, cat.happy + 8);
+    audio.playPhoneTone(523, 659, 0.1);
+    showToast(`${cat.name} is thoroughly entertained! (+8 Happiness)`);
+    renderRoomScene();
+    updateFocusCatDetailsUI();
+  }
+
+  cattubeVideoInterval = setInterval(() => {
+    cattubeFrame++;
+    let visualHTML = '';
+    
+    if (vidId === 'mice') {
+      const x = 15 + Math.sin(cattubeFrame * 0.4) * 35 + 35;
+      visualHTML = `
+        <svg viewBox="0 0 100 50" width="100%" height="100%">
+          <rect x="0" y="0" width="100%" height="50" fill="#1b5e20" opacity="0.3" />
+          <ellipse cx="${x}" cy="25" rx="5" ry="3.2" fill="#9e9e9e" />
+          <path d="M ${x + 5},25 Q ${x + 10},23 ${x + 12},27" fill="none" stroke="#757575" stroke-width="0.8" />
+          <circle cx="${x - 4}" cy="23" r="1.5" fill="#e91e63" />
+        </svg>
+      `;
+    } else if (vidId === 'fish') {
+      const y = 25 + Math.sin(cattubeFrame * 0.3) * 10;
+      const x = 10 + (cattubeFrame * 2) % 80;
+      visualHTML = `
+        <svg viewBox="0 0 100 50" width="100%" height="100%">
+          <rect x="0" y="0" width="100%" height="50" fill="#006064" opacity="0.4" />
+          <path d="M ${x},${y} Q ${x - 6},${y - 4} ${x - 10},${y} Q ${x - 6},${y + 4} ${x},${y} Z" fill="#ff7043" />
+          <polygon points="${x - 10},${y} ${x - 14},${y - 3} ${x - 14},${y + 3}" fill="#ff7043" />
+          <circle cx="${x - 2}" cy="${y - 1}" r="0.6" fill="#000" />
+        </svg>
+      `;
+    } else if (vidId === 'birds') {
+      const y = 35 + (cattubeFrame % 2 === 0 ? -4 : 0);
+      visualHTML = `
+        <svg viewBox="0 0 100 50" width="100%" height="100%">
+          <rect x="0" y="0" width="100%" height="50" fill="#e8f5e9" opacity="0.5" />
+          <circle cx="50" cy="${y}" r="6" fill="#0288d1" />
+          <polygon points="56,${y} 62,${y - 2} 56,${y + 2}" fill="#ffca28" />
+          <path d="M 47,${y} Q 40,${y - 6} 45,${y - 8} Z" fill="#03a9f4" />
+        </svg>
+      `;
+    } else if (vidId === 'grooming') {
+      const tongueY = 28 + (cattubeFrame % 3 === 0 ? 2 : 0);
+      visualHTML = `
+        <svg viewBox="0 0 100 50" width="100%" height="100%">
+          <rect x="0" y="0" width="100%" height="50" fill="#efebe9" opacity="0.6" />
+          <circle cx="50" cy="22" r="10" fill="#90a4ae" />
+          <polygon points="42,14 38,5 45,10" fill="#90a4ae" />
+          <polygon points="58,14 62,5 55,10" fill="#90a4ae" />
+          <ellipse cx="50" cy="${tongueY}" rx="3.5" ry="2" fill="#ff8a80" />
+        </svg>
+      `;
+    }
+    
+    player.innerHTML = visualHTML;
+  }, 150);
+}
+
+// --- 🎵 MEOWTIFY SOUND TRACK SYSTEM ---
+
+const MEOWTIFY_TRACKS = [
+  { id: 'purr', title: '💤 Deep Purr Hum', desc: 'Low frequency comforting vibration' },
+  { id: 'rain', title: '🌧️ Window Rain Drops', desc: 'White noise rain sound' },
+  { id: 'birds', title: '🐦 Forest Warblers', desc: 'Calming bird tweets' },
+  { id: 'laser', title: '⚡ Electro-Laser Beat', desc: 'Playful retro laser chirps' }
+];
+
+let meowtifyActiveTrack = null;
+let meowtifyAudioInterval = null;
+
+function initMeowtifyUI() {
+  const container = document.getElementById('meowtify-tracks-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+  MEOWTIFY_TRACKS.forEach(track => {
+    const active = meowtifyActiveTrack === track.id;
+    
+    const card = document.createElement('div');
+    card.style.cssText = `background: ${active ? '#282828' : '#181818'}; border: 1px solid ${active ? '#1db954' : '#282828'}; border-radius: 8px; padding: 8px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;`;
+    
+    card.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <span style="font-size:0.65rem; font-weight:bold; color:${active ? '#1db954' : '#fff'};">${track.title}</span>
+        <span style="font-size:0.5rem; color:#b3b3b3;">${track.desc}</span>
+      </div>
+      <span style="font-size:0.8rem; color:${active ? '#1db954' : '#b3b3b3'};">${active ? '🔊' : '▶️'}</span>
+    `;
+    
+    card.onclick = () => {
+      playMeowtifyTrack(track.id);
+    };
+    
+    container.appendChild(card);
+  });
+}
+
+function playMeowtifyTrack(trackId) {
+  if (meowtifyAudioInterval) clearInterval(meowtifyAudioInterval);
+  
+  if (meowtifyActiveTrack === trackId) {
+    meowtifyActiveTrack = null;
+    document.getElementById('meowtify-now-playing-title').textContent = 'No Track Playing';
+    document.getElementById('meowtify-play-pause-btn').textContent = '▶️';
+    initMeowtifyUI();
+    return;
+  }
+
+  meowtifyActiveTrack = trackId;
+  const track = MEOWTIFY_TRACKS.find(t => t.id === trackId);
+  document.getElementById('meowtify-now-playing-title').textContent = track.title;
+  document.getElementById('meowtify-play-pause-btn').textContent = '⏸️';
+  
+  initMeowtifyUI();
+
+  meowtifyAudioInterval = setInterval(() => {
+    if (audio.muted || meowtifyActiveTrack !== trackId) return;
+    
+    if (trackId === 'purr') {
+      audio.playPhoneTone(180, 182, 0.25);
+    } else if (trackId === 'rain') {
+      audio.playPhoneTone(1500, 2000, 0.02);
+    } else if (trackId === 'birds') {
+      const f = 2000 + Math.random() * 800;
+      audio.playPhoneTone(f, f + 10, 0.06);
+    } else if (trackId === 'laser') {
+      audio.playPhoneTone(659, 1209, 0.04);
+    }
+  }, 400);
+}
+
+document.getElementById('meowtify-play-pause-btn').onclick = () => {
+  if (meowtifyActiveTrack) {
+    playMeowtifyTrack(meowtifyActiveTrack);
+  }
+};
+
+// --- 🏃 CATFIT HEALTH & FITNESS SYSTEM ---
+
+function initCatFitUI() {
+  const activeCat = (state.data && state.data.activeCats) ? state.data.activeCats[focusCatIndex] : null;
+  const nameLabel = document.getElementById('catfit-focus-name');
+  if (nameLabel) nameLabel.textContent = activeCat ? activeCat.name : 'Luna';
+
+  if (state.data) {
+    if (state.data.catSteps === undefined) state.data.catSteps = 1040;
+    state.data.catSteps += Math.floor(Math.random() * 45 + 10);
+    state.saveProfiles();
+
+    const stepsVal = document.getElementById('catfit-steps-val');
+    const caloriesVal = document.getElementById('catfit-calories-val');
+    const activeVal = document.getElementById('catfit-active-val');
+    const activeBar = document.getElementById('catfit-graph-bar-active');
+
+    if (stepsVal) stepsVal.textContent = state.data.catSteps.toLocaleString();
+    if (caloriesVal) caloriesVal.textContent = `${(state.data.catSteps * 0.035).toFixed(1)} kcal`;
+    if (activeVal) activeVal.textContent = `${(state.data.catSteps * 0.003).toFixed(1)} mins`;
+    
+    if (activeBar) {
+      const h = Math.min(48, 15 + (state.data.catSteps % 30));
+      activeBar.style.height = `${h}px`;
+    }
+  }
+}
+
+// --- 📸 CATTITUDE SOCIAL MEDIA SYSTEM ---
+
+const CATTITUDE_POSTS = [
+  { handle: "@cool_cat_luna", text: "Felt cute, might scratch the brand new sofa later. IDK. 🐾💅", likes: 84, liked: false },
+  { handle: "@prof_whisker", text: "Protip: clean ears and groom static electricity. Cleanliness must always be maintained! 🩺✨", likes: 142, liked: false },
+  { handle: "@parent_grandpa", text: "Back in my day we didn't have screens. We just sat and stared at the empty wall for 6 hours straight. Good times.", likes: 98, liked: false },
+  { handle: "@stray_bob", text: "A Fish Merchant called me up and sent 15 coins gift. Easiest fish ever! 🐟🐟", likes: 210, liked: false },
+  { handle: "@kitty_cupcake", text: "Breeding was a success! I have a baby orange sibling who likes headbutts. 🍼🐾", likes: 119, liked: false }
+];
+
+function initCattitudeUI() {
+  const container = document.getElementById('cattitude-feed-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+  CATTITUDE_POSTS.forEach((post, idx) => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1.5px 3px rgba(0,0,0,0.05); margin-bottom: 8px;";
+    
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="font-size:0.65rem; color:#ad1457;">${post.handle}</strong>
+        <span style="font-size:0.5rem; color:#777;">Active Now</span>
+      </div>
+      <p style="margin: 3px 0; font-size:0.6rem; color:#2c3e50; line-height:1.35;">${post.text}</p>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #fce4ec; padding-top:4px; margin-top:2px;">
+        <span style="font-size:0.55rem; color:#ad1457; font-weight:bold;">❤️ <span class="likes-count">${post.likes}</span> likes</span>
+        <button class="btn like-action-btn" style="background:${post.liked ? '#ad1457' : '#e91e63'}; color:#fff; border:none; border-radius:6px; font-size:0.5rem; padding:2px 6px; font-weight:bold; cursor:pointer; outline:none;">
+          ${post.liked ? 'Liked' : 'Like'}
+        </button>
+      </div>
+    `;
+    
+    const likeBtn = card.querySelector('.like-action-btn');
+    likeBtn.onclick = () => {
+      post.liked = !post.liked;
+      post.likes += post.liked ? 1 : -1;
+      card.querySelector('.likes-count').textContent = post.likes;
+      likeBtn.textContent = post.liked ? 'Liked' : 'Like';
+      likeBtn.style.background = post.liked ? '#ad1457' : '#e91e63';
+      audio.playPhoneTone(880, 1109, 0.05);
+    };
+    
+    container.appendChild(card);
+  });
+}
+
+
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -5766,6 +6155,18 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
     
     // Stop minigame if closing
     if (minigameActive) endMinigame();
+
+    // Clear background loops from apps
+    if (typeof cattubeVideoInterval !== 'undefined' && cattubeVideoInterval) {
+      clearInterval(cattubeVideoInterval);
+      cattubeVideoInterval = null;
+    }
+    if (typeof meowtifyAudioInterval !== 'undefined' && meowtifyAudioInterval) {
+      clearInterval(meowtifyAudioInterval);
+      meowtifyAudioInterval = null;
+      meowtifyActiveTrack = null;
+    }
+    stopPhoneRingingSound();
   });
 });
 
