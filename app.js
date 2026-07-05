@@ -664,6 +664,33 @@ function renderCatSVG(cat, isThumbnail = false) {
             <circle cx="50" cy="67" r="4.5" fill="${aColor}" stroke="#3e2723" stroke-width="1" />
           </g>
         `;
+      } else if (acc.neckwear.style === 'custom_collar') {
+        const charmText = acc.neckwear.charmText || 'A';
+        const hasBeads = acc.neckwear.beads;
+        const beadCol = acc.neckwear.accentColor || '#ffca28';
+        
+        let beadsHTML = '';
+        if (hasBeads) {
+          beadsHTML = `
+            <circle cx="38" cy="64.8" r="2" fill="${beadCol}" />
+            <circle cx="44" cy="66.2" r="2" fill="${beadCol}" />
+            <circle cx="56" cy="66.2" r="2" fill="${beadCol}" />
+            <circle cx="62" cy="64.8" r="2" fill="${beadCol}" />
+          `;
+        }
+        
+        accessoriesHTML += `
+          <g class="${bodyClasses}">
+            <!-- Base strap -->
+            <path d="M 33,63 Q 50,68 67,63" stroke="${pColor}" stroke-width="4.2" fill="none" stroke-linecap="round" />
+            <!-- Beads -->
+            ${beadsHTML}
+            <!-- Gold charm -->
+            <circle cx="50" cy="68" r="5" fill="#ffd54f" stroke="#e65100" stroke-width="0.8" />
+            <!-- Charm Text -->
+            <text x="50" y="70" font-size="6.5" font-family="sans-serif" font-weight="900" text-anchor="middle" fill="#5d4037">${charmText}</text>
+          </g>
+        `;
       } else if (acc.neckwear.style === 'scarf') {
         accessoriesHTML += `
           <g class="${bodyClasses}">
@@ -3640,6 +3667,8 @@ function switchPhoneView(viewId) {
     initPhoneMapsUI();
   } else if (viewId === 'furnish') {
     updateFurnishAppUI();
+  } else if (viewId === 'collarmaker') {
+    initCollarMakerUI();
   } else if (viewId === 'videocall') {
     // Handled dynamically
   }
@@ -5396,6 +5425,176 @@ function hangUpPhoneVideoCall() {
 document.getElementById('phone-chat-videocall-btn').addEventListener('click', startPhoneVideoCall);
 document.getElementById('phone-videocall-next-btn').addEventListener('click', nextPhoneVideoCallSubtitle);
 document.getElementById('phone-videocall-hangup-btn').addEventListener('click', hangUpPhoneVideoCall);
+
+
+// --- 📿 SMARTPHONE COLLAR CRAFT SYSTEM ---
+
+let selectedCollarStrapColor = '#e53935'; // Red default
+let selectedCollarBeadColor = '#ffd54f';  // Yellow default
+
+function initCollarMakerUI() {
+  const select = document.getElementById('collar-cat-select');
+  if (!select || !state.data || !state.data.activeCats) return;
+  
+  select.innerHTML = '';
+  state.data.activeCats.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat.id;
+    opt.textContent = `🐱 ${cat.name}`;
+    select.appendChild(opt);
+  });
+
+  // Select initial presets
+  highlightCollarStrapColor('#e53935');
+  highlightCollarBeadColor('#ffd54f');
+  
+  const checkbox = document.getElementById('collar-beads-checkbox');
+  if (checkbox) checkbox.checked = false;
+  
+  const input = document.getElementById('collar-charm-input');
+  if (input) input.value = 'K';
+
+  drawCollarMakerPreview();
+}
+
+function highlightCollarStrapColor(color) {
+  selectedCollarStrapColor = color;
+  document.querySelectorAll('.collar-strap-btn').forEach(btn => {
+    const btnCol = btn.dataset.color;
+    btn.style.borderColor = (btnCol === color) ? '#3e2723' : '#ccc';
+    btn.style.transform = (btnCol === color) ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function highlightCollarBeadColor(color) {
+  selectedCollarBeadColor = color;
+  document.querySelectorAll('.collar-bead-btn').forEach(btn => {
+    const btnCol = btn.dataset.color;
+    btn.style.borderColor = (btnCol === color) ? '#3e2723' : '#ccc';
+    btn.style.transform = (btnCol === color) ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function drawCollarMakerPreview() {
+  const previewBox = document.getElementById('collar-live-preview-box');
+  if (!previewBox) return;
+
+  const checkbox = document.getElementById('collar-beads-checkbox');
+  const hasBeads = checkbox ? checkbox.checked : false;
+
+  const input = document.getElementById('collar-charm-input');
+  let charm = input ? input.value.trim().toUpperCase() : 'K';
+  
+  // Clean: only A-Z, 1-9 characters
+  charm = charm.replace(/[^A-Z1-9]/i, '');
+  if (charm.length > 1) charm = charm.charAt(0);
+  if (charm === '') charm = '?';
+  if (input && input.value !== charm) {
+    input.value = charm;
+  }
+
+  let beadsHTML = '';
+  if (hasBeads) {
+    beadsHTML = `
+      <circle cx="38" cy="24.8" r="2" fill="${selectedCollarBeadColor}" />
+      <circle cx="44" cy="26.2" r="2" fill="${selectedCollarBeadColor}" />
+      <circle cx="56" cy="26.2" r="2" fill="${selectedCollarBeadColor}" />
+      <circle cx="62" cy="24.8" r="2" fill="${selectedCollarBeadColor}" />
+    `;
+  }
+
+  previewBox.innerHTML = `
+    <svg viewBox="0 0 100 50" width="100%" height="100%">
+      <!-- Collar Strap -->
+      <path d="M 30,23 Q 50,28 70,23" stroke="${selectedCollarStrapColor}" stroke-width="4.2" fill="none" stroke-linecap="round" />
+      <!-- Beads -->
+      ${beadsHTML}
+      <!-- Gold Charm Tag -->
+      <circle cx="50" cy="28" r="5.2" fill="#ffd54f" stroke="#e65100" stroke-width="0.8" />
+      <text x="50" y="32" font-size="7.5" font-family="sans-serif" font-weight="900" text-anchor="middle" fill="#5d4037">${charm}</text>
+    </svg>
+  `;
+}
+
+function craftCustomCollar() {
+  if (!state.data) return;
+
+  if (state.data.coins < 15) {
+    showToast("Not enough Cat Coins! Play minigames to earn more.");
+    return;
+  }
+
+  const select = document.getElementById('collar-cat-select');
+  const catId = select ? select.value : '';
+  if (!catId) {
+    showToast("Please select a cat first!");
+    return;
+  }
+
+  const cat = state.data.activeCats.find(c => c.id === catId);
+  if (!cat) {
+    showToast("Selected cat not found!");
+    return;
+  }
+
+  const checkbox = document.getElementById('collar-beads-checkbox');
+  const hasBeads = checkbox ? checkbox.checked : false;
+
+  const input = document.getElementById('collar-charm-input');
+  let charm = input ? input.value.trim().toUpperCase() : 'K';
+  charm = charm.replace(/[^A-Z1-9]/i, '');
+  if (charm.length > 1) charm = charm.charAt(0);
+  if (charm === '') charm = 'K';
+
+  // Deduct coins
+  state.data.coins -= 15;
+  
+  if (!cat.accessories) {
+    cat.accessories = { hat: null, body: null, neckwear: null };
+  }
+
+  cat.accessories.neckwear = {
+    style: 'custom_collar',
+    primaryColor: selectedCollarStrapColor,
+    accentColor: selectedCollarBeadColor,
+    beads: hasBeads,
+    charmText: charm
+  };
+
+  state.saveProfiles();
+
+  // Play success sound
+  audio.playPhoneTone(880, 1109, 0.25);
+  showToast(`📿 Custom collar crafted for ${cat.name}! (-15 Coins)`);
+
+  drawCollarMakerPreview();
+  renderRoomScene();
+}
+
+// Bind Strap palettes
+document.querySelectorAll('.collar-strap-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    highlightCollarStrapColor(btn.dataset.color);
+    drawCollarMakerPreview();
+    audio.playPhoneTone(700, 850, 0.05);
+  });
+});
+
+// Bind Bead palettes
+document.querySelectorAll('.collar-bead-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    highlightCollarBeadColor(btn.dataset.color);
+    drawCollarMakerPreview();
+    audio.playPhoneTone(700, 850, 0.05);
+  });
+});
+
+// Bind other preview triggers
+document.getElementById('collar-beads-checkbox').addEventListener('change', drawCollarMakerPreview);
+document.getElementById('collar-charm-input').addEventListener('input', drawCollarMakerPreview);
+
+// Submit Craft button
+document.getElementById('collar-craft-submit-btn').addEventListener('click', craftCustomCollar);
 
 
 // --- GENERAL UI MODAL CLOSE EVENTS ---

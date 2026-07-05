@@ -836,6 +836,13 @@
                     </button>
                     <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Bed-Craft</span>
                   </div>
+                  <!-- Collar Craft -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="collarmaker" style="background: #673ab7; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      📿
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Collar Craft</span>
+                  </div>
                 </div>
               </div>
               <!-- Bottom Dock (including Settings⚙️) -->
@@ -1270,7 +1277,73 @@
                   </div>
                 </div>
               </div>
+              </div>
+
+            <!-- 11. COLLAR CRAFT APP VIEW -->
+            <div class="phone-view" id="phone-view-collarmaker" style="display: none; flex-direction: column; background: #eceff1; height: 100%; padding: 8px; gap: 8px; color: var(--text-dark); text-align: left;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #512da8; font-size: 0.95rem; border-bottom: 2px solid #673ab7; padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                <span>📿 Collar Craft Studio</span>
+                <span style="font-size: 0.55rem; background: #673ab7; color: white; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight:bold;">15 🪙</span>
+              </div>
+              
+              <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px;">
+                <!-- Cat Selector -->
+                <div style="background: white; border: 1.5px solid #d1c4e9; border-radius: 10px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.65rem; color:#512da8;">🐱 Select Cat:</strong>
+                  <select id="collar-cat-select" style="background:#ede7f6; color:#512da8; border:1px solid #b39ddb; border-radius:6px; padding:3px 6px; font-weight:bold; font-size:0.7rem; cursor:pointer; outline:none;">
+                    <!-- Active cats loaded dynamically -->
+                  </select>
+                </div>
+
+                <!-- Collar Strap Color -->
+                <div style="background: white; border: 1.5px solid #d1c4e9; border-radius: 10px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.65rem; color:#512da8;">🧣 Strap Color:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px;" id="collar-strap-palette">
+                    <button class="btn collar-strap-btn" data-color="#e53935" style="background:#e53935; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#e91e63" style="background:#e91e63; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#1e88e5" style="background:#1e88e5; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#00897b" style="background:#00897b; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#ffb300" style="background:#ffb300; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#8e24aa" style="background:#8e24aa; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#212121" style="background:#212121; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-strap-btn" data-color="#795548" style="background:#795548; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                  </div>
+                </div>
+
+                <!-- Beads Option -->
+                <div style="background: white; border: 1.5px solid #d1c4e9; border-radius: 10px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="font-size:0.65rem; color:#512da8;">🧶 Add Beads:</strong>
+                    <input type="checkbox" id="collar-beads-checkbox" style="cursor:pointer;">
+                  </div>
+                  <!-- Beads Color Palette -->
+                  <div id="collar-beads-palette" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:4px; margin-top:2px;">
+                    <button class="btn collar-bead-btn" data-color="#ffd54f" style="background:#ffd54f; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-bead-btn" data-color="#80deea" style="background:#80deea; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-bead-btn" data-color="#ffffff" style="background:#ffffff; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                    <button class="btn collar-bead-btn" data-color="#ffb74d" style="background:#ffb74d; height:18px; border-radius:4px; border:1.5px solid #ccc;"></button>
+                  </div>
+                </div>
+
+                <!-- Charm Initial -->
+                <div style="background: white; border: 1.5px solid #d1c4e9; border-radius: 10px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.65rem; color:#512da8;">🔤 Charm Letter/Number:</strong>
+                  <input type="text" id="collar-charm-input" maxlength="1" value="K" style="border:1px solid #b39ddb; border-radius:6px; padding:3px 8px; font-size:0.75rem; text-align:center; font-weight:bold; outline:none; text-transform:uppercase; background:#f5f5f5;">
+                </div>
+
+                <!-- Collar Live Preview -->
+                <div style="background: #1c262f; border: 1.5px solid #37474f; border-radius: 10px; height: 50px; display:flex; align-items:center; justify-content:center; overflow:hidden;" id="collar-live-preview-box">
+                  <!-- Live collar SVG goes here -->
+                </div>
+              </div>
+
+              <!-- Action button -->
+              <button id="collar-craft-submit-btn" class="btn primary-btn" style="background: #673ab7; color: white; border: none; border-radius: 10px; padding: 8px 0; font-weight: bold; font-size: 0.75rem; width: 100%; box-shadow: 0 3px 6px rgba(103,58,183,0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                🔨 Craft Collar (15 🪙)
+              </button>
             </div>
+
+          </div>
 
           </div>
 
