@@ -3531,8 +3531,21 @@ function populateChatContacts() {
   const curVal = select.value;
   select.innerHTML = '';
   
-  state.data.activeCats.forEach((cat, index) => {
-    const key = `cat_${index}`;
+  // Add Vet Option
+  const vetOpt = document.createElement('option');
+  vetOpt.value = 'vet';
+  vetOpt.textContent = '🩺 Dr. Whisker (Vet)';
+  select.appendChild(vetOpt);
+  
+  if (!phoneChatHistories['vet']) {
+    phoneChatHistories['vet'] = [
+      { sender: 'them', text: 'Dr. Whisker: "Hello! I am Dr. Whisker (Vet). Ask me medical advice or tips about cleanliness, allergies, study room doors, or academy degrees!"' }
+    ];
+  }
+  
+  // Add Active House Cats Option
+  state.data.activeCats.forEach((cat) => {
+    const key = cat.id;
     const opt = document.createElement('option');
     opt.value = key;
     opt.textContent = `🐱 ${cat.name}`;
@@ -3700,39 +3713,50 @@ function sendPhoneChatMessage() {
     let reply = '';
     const norm = text.toLowerCase();
     
-    const catIdx = parseInt(contact.replace('cat_', ''));
-    const cat = (state.data && state.data.activeCats) ? state.data.activeCats[catIdx] : null;
-    
-    if (cat) {
-      const SUPPORTIVE_CAT_REPLIES = [
-        "Mew! I love you so much, hooman! You are doing an amazing job taking care of us! ❤️",
-        "Purr... I feel so safe and happy when you are around. Thank you for being the best owner ever!",
-        "Don't stress, hooman! You are doing great. Take a deep breath and give me a pet later! 🥰",
-        "Meow! I was just thinking about how lucky I am to have you as my companion. Keep going! 🌟",
-        "Purrr... *headbutts your hand* You've got this today! I believe in you!",
-        "Mew! Just checking in to make sure you are drinking water and taking care of yourself too! 🐾",
-        "Meow! Your kindness makes my heart warm. Thank you for the delicious food and playtime! 🐟",
-        "Purr... *curls up next to you virtually* Whenever you feel tired, I am right here to support you! 💤",
-        "Mew! Remember that you are wonderful and doing your best. I am proud to be your kitten! 🎀",
-        "Meow! Sending you a big virtual headbutt and lots of purrs! You're making this house a true home! 🏡",
-        "Purrr... Did you know you're my favorite human in the whole wide world? Mew! 💖",
-        "Meow! You bring so much joy to my life. I hope I bring you joy too! 🎈"
-      ];
-      
-      let comment = '';
-      if (norm.includes('love')) {
-        comment = "Mew! I love you more than tuna treats! *purrs loudly* ❤️";
-      } else if (norm.includes('tired') || norm.includes('sad') || norm.includes('exhausted') || norm.includes('sick')) {
-        comment = "Oh no, hooman! *nudges you* Rest up! You are working so hard and doing a wonderful job. I'll watch the play space! 💤";
-      } else if (norm.includes('feed') || norm.includes('fish') || norm.includes('food')) {
-        comment = "Meow! Feed me delicious fishies anytime, but most of all I just love spending time with you! 🐟";
+    if (contact === 'vet') {
+      if (norm.includes('dirty') || norm.includes('clean') || norm.includes('bath') || norm.includes('wash')) {
+        reply = 'Dr. Whisker: "Keep your cats clean! Give them a warm soapy bath in the Bath Area to restore 100% cleanliness."';
+      } else if (norm.includes('allergy') || norm.includes('dander') || norm.includes('sneeze') || norm.includes('dust')) {
+        reply = 'Dr. Whisker: "To prevent allergies, close the Study Room door (cats out) and use the Vacuum Room button to clear dander!"';
+      } else if (norm.includes('tired') || norm.includes('sleep') || norm.includes('energy')) {
+        reply = 'Dr. Whisker: "Make sure cats rest in The Back Room when their energy gets low. Sleeping on cushions restores energy!"';
+      } else if (norm.includes('study') || norm.includes('class') || norm.includes('school') || norm.includes('degree')) {
+        reply = 'Dr. Whisker: "Enrolling your cats in courses at the School Academy grants permanent degree buffs and speeds up their actions!"';
       } else {
-        comment = SUPPORTIVE_CAT_REPLIES[Math.floor(Math.random() * SUPPORTIVE_CAT_REPLIES.length)];
+        reply = 'Dr. Whisker: "Be sure to feed and play with your kittens. Regular grooming also keeps shedding dander low!"';
       }
-      
-      reply = `${cat.name}: "${comment}"`;
     } else {
-      reply = `System: "Cat has left the house."`;
+      const cat = (state.data && state.data.activeCats) ? state.data.activeCats.find(c => c.id === contact) : null;
+      if (cat) {
+        const SUPPORTIVE_CAT_REPLIES = [
+          "Mew! I love you so much, hooman! You are doing an amazing job taking care of us! ❤️",
+          "Purr... I feel so safe and happy when you are around. Thank you for being the best owner ever!",
+          "Don't stress, hooman! You are doing great. Take a deep breath and give me a pet later! 🥰",
+          "Meow! I was just thinking about how lucky I am to have you as my companion. Keep going! 🌟",
+          "Purrr... *headbutts your hand* You've got this today! I believe in you!",
+          "Mew! Just checking in to make sure you are drinking water and taking care of yourself too! 🐾",
+          "Meow! Your kindness makes my heart warm. Thank you for the delicious food and playtime! 🐟",
+          "Purr... *curls up next to you virtually* Whenever you feel tired, I am right here to support you! 💤",
+          "Mew! Remember that you are wonderful and doing your best. I am proud to be your kitten! 🎀",
+          "Meow! Sending you a big virtual headbutt and lots of purrs! You're making this house a true home! 🏡",
+          "Purrr... Did you know you're my favorite human in the whole wide world? Mew! 💖",
+          "Meow! You bring so much joy to my life. I hope I bring you joy too! 🎈"
+        ];
+        
+        let comment = '';
+        if (norm.includes('love')) {
+          comment = "Mew! I love you more than tuna treats! *purrs loudly* ❤️";
+        } else if (norm.includes('tired') || norm.includes('sad') || norm.includes('exhausted') || norm.includes('sick')) {
+          comment = "Oh no, hooman! *nudges you* Rest up! You are working so hard and doing a wonderful job. I'll watch the play space! 💤";
+        } else if (norm.includes('feed') || norm.includes('fish') || norm.includes('food')) {
+          comment = "Meow! Feed me delicious fishies anytime, but most of all I just love spending time with you! 🐟";
+        } else {
+          comment = SUPPORTIVE_CAT_REPLIES[Math.floor(Math.random() * SUPPORTIVE_CAT_REPLIES.length)];
+        }
+        reply = `${cat.name}: "${comment}"`;
+      } else {
+        reply = `System: "This cat has graduated or left the house."`;
+      }
     }
     
     phoneChatHistories[contact].push({ sender: 'them', text: reply });
