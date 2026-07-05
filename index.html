@@ -1421,6 +1421,43 @@
               </div>
             </div>
 
+            <!-- 19. MEOWGLE CAM (SECURITY CAM) APP VIEW -->
+            <div class="phone-view" id="phone-view-securitycam" style="display: none; flex-direction: column; background: #1c2833; height: 100%; justify-content: space-between; color: white; text-align: left; padding: 6px; gap: 6px;">
+              <div style="background: #2c3e50; border-bottom: 2px solid #566573; padding: 5px 8px; display: flex; align-items: center; justify-content: space-between; font-family: var(--display-font); font-weight: 800; font-size: 0.85rem; border-radius: 6px;">
+                <span>📹 Meowgle Cam</span>
+                <div style="display: flex; align-items: center; gap: 4px; font-size: 0.55rem; color: #2ecc71; font-weight: bold;">
+                  <span style="animation: pulse 1s infinite alternate; color: #e74c3c; display:inline-block; font-size:0.6rem;">●</span> LIVE REC
+                </div>
+              </div>
+
+              <div style="height: 140px; background: #000; border: 2px solid #2c3e50; border-radius: 8px; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: inset 0 0 15px rgba(0,255,0,0.4);" id="securitycam-monitor-screen">
+                <div style="display: flex; justify-content: space-between; padding: 4px 6px; font-family: monospace; font-size: 0.45rem; color: #2ecc71; text-shadow: 0 0 2px #2ecc71; z-index: 2;">
+                  <span id="securitycam-label">CAM 1 - LIVING</span>
+                  <span id="securitycam-time">Y1 M1 D01</span>
+                </div>
+
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 3px, 6px 100%; pointer-events: none; z-index: 3;"></div>
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(46, 204, 113, 0.08); pointer-events: none; z-index: 1;"></div>
+
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative;" id="securitycam-feed-container">
+                  <!-- Custom night-vision SVG content -->
+                </div>
+
+                <div style="padding: 2px 6px; font-family: monospace; font-size: 0.45rem; color: #2ecc71; text-shadow: 0 0 2px #2ecc71; text-align: right; z-index: 2;">
+                  SIGNAL STRENGTH: 98%
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 4px; padding-bottom: 2px;">
+                <label style="font-size: 0.52rem; color: #b2babb; font-weight: bold; text-transform: uppercase;">Select Channel:</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;" id="securitycam-channels-grid">
+                  <!-- Dynamic channel buttons -->
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           </div>
 
           </div>

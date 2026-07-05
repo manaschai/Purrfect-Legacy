@@ -3613,6 +3613,14 @@ function switchPhoneView(viewId) {
     clearInterval(cattubeVideoInterval);
     cattubeVideoInterval = null;
   }
+  if (viewId !== 'securitycam' && typeof securityCamTickInterval !== 'undefined' && securityCamTickInterval) {
+    clearInterval(securityCamTickInterval);
+    securityCamTickInterval = null;
+  }
+  if (viewId === 'securitycam') {
+    if (typeof securityCamTickInterval !== 'undefined' && securityCamTickInterval) clearInterval(securityCamTickInterval);
+    securityCamTickInterval = setInterval(drawSecurityCamFeed, 1000);
+  }
   document.querySelectorAll('.phone-view').forEach(view => {
     view.style.display = 'none';
   });
@@ -3689,6 +3697,8 @@ function switchPhoneView(viewId) {
     initCatFitUI();
   } else if (viewId === 'cattitude') {
     initCattitudeUI();
+  } else if (viewId === 'securitycam') {
+    initSecurityCamUI();
   }
 }
 
@@ -5791,15 +5801,16 @@ const APPS_CONFIG = {
   'play': { name: 'Meowgle Play', icon: '🤖', bg: '#607d8b' },
   'cattube': { name: 'CatTube', icon: '📺', bg: '#f44336' },
   'meowtify': { name: 'Meowtify', icon: '🎵', bg: '#1db954' },
-  'catfit': { name: 'CatFit', icon: '🏃', bg: '#ff5722' },
-  'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' }
+  'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' },
+  'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' }
 };
 
 const DOWNLOADABLE_APPS = [
   { id: 'cattube', name: 'CatTube', desc: 'Watch squeaky mice and chirping bird videos made for kittens!', icon: '📺', bg: '#f44336' },
   { id: 'meowtify', name: 'Meowtify', desc: 'Listen to soothing ambient tracks: deep purrs, rain, and chirping forest birds!', icon: '🎵', bg: '#1db954' },
   { id: 'catfit', name: 'CatFit', desc: 'Track your kittens daily steps, calories burned, and active times!', icon: '🏃', bg: '#ff5722' },
-  { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' }
+  { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' },
+  { id: 'securitycam', name: 'Meowgle Cam', desc: 'Secure your house with live CCTV camera feeds of all rooms!', icon: '📹', bg: '#607d8b' }
 ];
 
 function renderPhoneHomeScreen() {
@@ -6148,6 +6159,174 @@ function initCattitudeUI() {
 }
 
 
+// --- 📹 MEOWGLE CAM (SECURITY CAM) SYSTEM ---
+
+const SECURITY_CHANNELS = [
+  { id: 'bedroom', name: 'CAM 1 - BEDROOM', label: 'CAM 1 - BEDROOM', room: 'phone-room' },
+  { id: 'living', name: 'CAM 2 - LIVING', label: 'CAM 2 - LIVING', room: 'living-room' },
+  { id: 'bath', name: 'CAM 3 - BATH', label: 'CAM 3 - BATH AREA', room: 'bath-area' },
+  { id: 'backroom', name: 'CAM 4 - RETIREMENT', label: 'CAM 4 - BACK ROOM', room: 'back-room' },
+  { id: 'school', name: 'CAM 5 - ACADEMY', label: 'CAM 5 - SCHOOL', room: 'school' }
+];
+
+let activeSecurityChannel = 'living';
+let securityCamTickInterval = null;
+
+function initSecurityCamUI() {
+  const grid = document.getElementById('securitycam-channels-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  SECURITY_CHANNELS.forEach(channel => {
+    const active = activeSecurityChannel === channel.id;
+    
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.style.cssText = `padding: 6px 4px; font-size: 0.55rem; font-weight: bold; border-radius: 6px; border: 1.5px solid ${active ? '#2ecc71' : '#566573'}; background: ${active ? '#1e824c' : '#2c3e50'}; color: white; cursor: pointer; text-align: center;`;
+    btn.textContent = channel.name;
+    
+    btn.onclick = () => {
+      activeSecurityChannel = channel.id;
+      audio.playPhoneTone(700, 850, 0.05);
+      initSecurityCamUI();
+    };
+    
+    grid.appendChild(btn);
+  });
+
+  drawSecurityCamFeed();
+}
+
+function drawSecurityCamFeed() {
+  const container = document.getElementById('securitycam-feed-container');
+  if (!container || !state.data) return;
+  
+  const channel = SECURITY_CHANNELS.find(c => c.id === activeSecurityChannel);
+  if (!channel) return;
+  
+  const labelEl = document.getElementById('securitycam-label');
+  const timeEl = document.getElementById('securitycam-time');
+  
+  if (labelEl) labelEl.textContent = channel.label;
+  if (timeEl) {
+    const y = state.data.year || 1;
+    const m = state.data.month || 1;
+    const d = state.data.day || 1;
+    const pad = (n) => n.toString().padStart(2, '0');
+    timeEl.textContent = `Y${y} M${m} D${pad(d)}  ${new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  }
+  
+  const catsFound = [];
+  
+  if (channel.id === 'backroom') {
+    if (state.data.retiredCats) {
+      state.data.retiredCats.forEach(cat => {
+        catsFound.push({ name: cat.name, status: 'Resting' });
+      });
+    }
+  } else {
+    if (state.data.activeCats) {
+      state.data.activeCats.forEach(cat => {
+        let catRoom = 'living-room';
+        if (currentRoom === 'school') {
+          catRoom = 'school';
+        } else if (currentRoom === 'bath-area') {
+          catRoom = 'bath-area';
+        } else if (currentRoom === 'phone-room') {
+          catRoom = state.data.doorOpen ? 'phone-room' : 'living-room';
+        }
+        
+        if (channel.room === catRoom) {
+          let status = 'Idling';
+          if (catRoom === 'school' && cat.status === 'studying') status = 'Studying';
+          else if (catRoom === 'bath-area') status = 'Bathing';
+          else if (cat.happy < 40) status = 'Bored';
+          else if (cat.energy < 30) status = 'Tired';
+          
+          catsFound.push({ name: cat.name, status: status });
+        }
+      });
+    }
+  }
+
+  let blueprintSVG = '';
+  
+  if (channel.id === 'bedroom') {
+    blueprintSVG = `
+      <rect x="15" y="8" width="22" height="34" fill="none" stroke="#2ecc71" stroke-width="1" stroke-dasharray="2,2" />
+      <rect x="15" y="8" width="22" height="8" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <rect x="65" y="10" width="20" height="15" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <line x1="10" y1="42" x2="90" y2="42" stroke="#2ecc71" stroke-width="0.8" stroke-dasharray="1,3" />
+    `;
+  } else if (channel.id === 'living') {
+    blueprintSVG = `
+      <rect x="20" y="28" width="60" height="14" rx="3" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <rect x="35" y="5" width="30" height="6" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <circle cx="50" cy="20" r="10" fill="none" stroke="#2ecc71" stroke-width="0.8" stroke-dasharray="2,2" />
+    `;
+  } else if (channel.id === 'bath') {
+    blueprintSVG = `
+      <rect x="15" y="10" width="32" height="18" rx="8" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <circle cx="75" cy="18" r="6" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <line x1="5" y1="36" x2="95" y2="36" stroke="#2ecc71" stroke-width="0.5" opacity="0.5" />
+      <line x1="30" y1="30" x2="30" y2="42" stroke="#2ecc71" stroke-width="0.5" opacity="0.5" />
+      <line x1="60" y1="30" x2="60" y2="42" stroke="#2ecc71" stroke-width="0.5" opacity="0.5" />
+    `;
+  } else if (channel.id === 'backroom') {
+    blueprintSVG = `
+      <circle cx="30" cy="20" r="8" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <circle cx="30" cy="20" r="4" fill="none" stroke="#2ecc71" stroke-width="0.5" stroke-dasharray="2,1" />
+      <rect x="60" y="15" width="22" height="20" rx="4" fill="none" stroke="#2ecc71" stroke-width="1" />
+    `;
+  } else if (channel.id === 'school') {
+    blueprintSVG = `
+      <rect x="15" y="15" width="26" height="16" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <rect x="58" y="15" width="26" height="16" fill="none" stroke="#2ecc71" stroke-width="1" />
+      <circle cx="28" cy="8" r="3" fill="none" stroke="#2ecc71" stroke-width="0.8" />
+      <circle cx="71" cy="8" r="3" fill="none" stroke="#2ecc71" stroke-width="0.8" />
+    `;
+  }
+
+  let catsSVG = '';
+  if (catsFound.length === 0) {
+    catsSVG = `
+      <text x="50" y="27" fill="#2ecc71" font-size="5" text-anchor="middle" font-family="monospace" opacity="0.7">
+        NO ACTIVITY DETECTED
+      </text>
+    `;
+  } else {
+    catsFound.forEach((cat, idx) => {
+      const cx = catsFound.length === 1 ? 50 : (28 + idx * 44);
+      const cy = 25;
+      
+      catsSVG += `
+        <g transform="translate(${cx}, ${cy})">
+          <circle cx="0" cy="0" r="8" fill="none" stroke="#2ecc71" stroke-width="0.6" opacity="0.4">
+            <animate attributeName="r" values="4;10;4" dur="2s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="0" cy="0" r="3" fill="#2ecc71" />
+          <rect x="-24" y="6" width="48" height="10" rx="2" fill="#000" stroke="#2ecc71" stroke-width="0.8" />
+          <text x="0" y="11.5" fill="#2ecc71" font-size="3.8" font-weight="bold" font-family="monospace" text-anchor="middle">
+            ${cat.name}
+          </text>
+          <text x="0" y="14.5" fill="#2ecc71" font-size="2.6" font-family="monospace" text-anchor="middle" opacity="0.8">
+            [${cat.status.toUpperCase()}]
+          </text>
+        </g>
+      `;
+    });
+  }
+
+  const finalSVG = `
+    <svg viewBox="0 0 100 50" width="100%" height="100%">
+      ${blueprintSVG}
+      ${catsSVG}
+    </svg>
+  `;
+  
+  container.innerHTML = finalSVG;
+}
+
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -6165,6 +6344,10 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
       clearInterval(meowtifyAudioInterval);
       meowtifyAudioInterval = null;
       meowtifyActiveTrack = null;
+    }
+    if (typeof securityCamTickInterval !== 'undefined' && securityCamTickInterval) {
+      clearInterval(securityCamTickInterval);
+      securityCamTickInterval = null;
     }
     stopPhoneRingingSound();
   });
