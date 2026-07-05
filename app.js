@@ -850,6 +850,18 @@ class GameState {
         if (!this.data.furniture.window) this.data.furniture.window = 'sunny';
       }
       
+      if (!this.data.vacationQuest) {
+        this.data.vacationQuest = {
+          type: 'groom',
+          name: 'Groom cats 5 times',
+          target: 5,
+          current: 0,
+          completed: false,
+          unlocked: false,
+          scheduledDay: null
+        };
+      }
+      
       // Calculate offline progress
       this.calculateOfflineProgress();
     } else {
@@ -1514,7 +1526,15 @@ function initGameScreen() {
   }
 }
 
+let lastKnownCoins = null;
 function updateHeaderStats() {
+  if (state.data) {
+    if (lastKnownCoins !== null && state.data.coins > lastKnownCoins) {
+      const diff = state.data.coins - lastKnownCoins;
+      updateVacationQuestProgress('earn_coins', diff);
+    }
+    lastKnownCoins = state.data.coins;
+  }
   document.getElementById('header-coins').textContent = state.data.coins;
   document.getElementById('shop-coins-count').textContent = state.data.coins;
   document.getElementById('header-trust').textContent = state.data.trustLevel;
@@ -1792,6 +1812,13 @@ function switchRoom(roomName) {
     farmSign.style.display = (roomName === 'back-room') ? 'block' : 'none';
   }
 
+  const activeEv = getActiveEventToday();
+  if (activeEv && activeEv.type === 'vacation') {
+    playContainer.classList.add('vacation-style');
+  } else {
+    playContainer.classList.remove('vacation-style');
+  }
+
   renderRoomScene();
 }
 
@@ -1895,6 +1922,7 @@ function gameLoopTick() {
         state.data.calendarMonth = 0;
         state.data.calendarYear = (state.data.calendarYear || 1) + 1;
       }
+      generateMonthlyVacationQuest();
     }
     
     // Cat-Bank Daily 5% Interest Compounder
@@ -1917,6 +1945,14 @@ function gameLoopTick() {
       setTimeout(() => {
         showToast(`🌟 Today's Event: ${ev.name}!`);
       }, 1200);
+      if (ev.type === 'vacation') {
+        state.data.coins += 50;
+        state.saveProfiles();
+        updateHeaderStats();
+        setTimeout(() => {
+          showToast(`🌴 Vacation Bonus: Earned 🪙 50 Cat Coins allowance! 🌊`);
+        }, 3200);
+      }
     }
 
     stateModified = true;
@@ -1986,10 +2022,19 @@ function gameLoopTick() {
     // Affection decay rate: 0.04 / sec
     // Cleanliness decay rate: 0.03 / sec
     // Energy decay rate: 0.02 / sec
+    const activeEvent = getActiveEventToday();
+    const isVacationToday = activeEvent && activeEvent.type === 'vacation';
+
     let hungerDecay = 0.05 * pConfig.hungerMult;
     let thirstDecay = 0.07 * pConfig.thirstMult;
-    let affectionDecay = 0.04 * pConfig.affectionMult;
+    let affectionDecay = isVacationToday ? 0 : 0.04 * pConfig.affectionMult;
     let cleanlinessDecay = 0.03 * pConfig.cleanMult;
+
+    if (isVacationToday) {
+      hungerDecay *= 0.5;
+      thirstDecay *= 0.5;
+      cleanlinessDecay *= 0.5;
+    }
 
     // Passive reduction items
     if (state.data.shopItems.includes('auto_feeder')) hungerDecay *= 0.5;
@@ -2018,8 +2063,8 @@ function gameLoopTick() {
         showToast(`${cat.name} woke up!`);
       }
     } else if (cat.status === 'studying') {
-      // Studying is a task - consumes energy
-      cat.energy = Math.max(0, Math.floor(cat.energy - 0.08 * pConfig.energyMult));
+      const studyEnergyCost = isVacationToday ? 0 : (0.08 * pConfig.energyMult);
+      cat.energy = Math.max(0, Math.floor(cat.energy - studyEnergyCost));
       if (cat.energy <= 5) {
         cat.status = 'idle';
         delete cat.studyCourse;
@@ -2213,6 +2258,11 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
         affectionGain = Math.floor(affectionGain * 1.35);
       }
 
+      if (isVacationToday) {
+        affectionGain *= 2;
+        energyCost = Math.floor(energyCost * 0.5);
+      }
+
       cat.affection = Math.min(100, cat.affection + affectionGain);
       cat.energy = Math.max(0, cat.energy - energyCost);
       cat.cleanliness = Math.max(0, cat.cleanliness - 10);
@@ -2251,6 +2301,10 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
         petGain = Math.floor(petGain * 1.35);
       }
 
+      if (isVacationToday) {
+        petGain *= 2;
+      }
+
       cat.affection = Math.min(100, cat.affection + petGain);
       triggerFloater(fx, fy, `+${petGain} Love`, 'love');
 
@@ -2262,8 +2316,11 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
     case 'groom':
       audio.playPurr();
       cat.cleanliness = Math.min(100, cat.cleanliness + 30);
-      cat.affection = Math.min(100, cat.affection + 10);
+      let groomAff = 10;
+      if (isVacationToday) groomAff *= 2;
+      cat.affection = Math.min(100, cat.affection + groomAff);
       triggerFloater(fx, fy, `+30 Cleanliness`, 'love');
+      updateVacationQuestProgress('groom');
       break;
 
     case 'bath':
@@ -2283,9 +2340,13 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
         triggerFloater(fx, fy - 20, '+10 Coins (Spa Bonus!)', 'coins');
         showToast("🫧 Event active: Sunday Spa Day (Double Affection + 10 Coins!)");
       }
+      if (isVacationToday) {
+        bathAff *= 2;
+      }
       cat.affection = Math.min(100, cat.affection + bathAff);
       triggerFloater(fx, fy, '100% Clean! 🫧', 'love');
       triggerFloater(fx, fy - 40, `+${bathAff} Affection`, 'love');
+      updateVacationQuestProgress('groom');
       break;
 
     case 'sleep':
@@ -2504,6 +2565,7 @@ function onMouseCatch(e) {
   if (!minigameActive) return;
   audio.playSqueak();
   minigameHits++;
+  updateVacationQuestProgress('minigame');
   
   document.getElementById('minigame-hits').textContent = minigameHits;
   
@@ -2637,6 +2699,7 @@ function openCalendar() {
   document.getElementById('scheduler-name-input').value = '';
   
   renderCalendar();
+  renderVacationPanel();
   calendarModal.classList.add('active');
 }
 
@@ -2666,8 +2729,9 @@ function renderCalendar() {
     if (todayEvent.type === 'spa_day') effectText = "Baths grant +10 Coins & Double Affection today!";
     if (todayEvent.type === 'fish_feast') effectText = "Friday Fish Feast! Feeding active cats fills +15 extra Hunger.";
     if (todayEvent.type === 'play_party') effectText = "Play Party! Toy play actions grant double Affection.";
+    if (todayEvent.type === 'vacation') effectText = "🌴 Vacation Day! Zero energy loss, double affection gains, half stats decay, and +50🪙 bonus!";
     
-    descDisplay.innerHTML = `<strong>${todayEvent.name}</strong><br><span style="font-size:0.85rem; color:#2e7d32;">${effectText}</span>`;
+    descDisplay.innerHTML = `<strong>${todayEvent.name}</strong><br><span style="font-size:0.82rem; color:#00acc1;">${effectText}</span>`;
     cardDisplay.classList.add('has-active');
   } else {
     descDisplay.textContent = "No active events today. Spend time with your cats or schedule a special day!";
@@ -2713,6 +2777,7 @@ function renderCalendar() {
       if (type === 'spa_day') dot.style.backgroundColor = 'var(--color-thirst)';
       else if (type === 'fish_feast') dot.style.backgroundColor = 'var(--color-hunger)';
       else if (type === 'play_party') dot.style.backgroundColor = 'var(--color-energy)';
+      else if (type === 'vacation') dot.style.backgroundColor = 'var(--accent-teal)';
       else dot.style.backgroundColor = 'var(--color-cleanliness)';
       
       dot.title = state.data.customEvents[customKey].title;
@@ -3076,6 +3141,7 @@ function enrollInCourse(courseId) {
   setTimeout(() => audio.playMeow(1.2), 100);
 
   showToast(`${cat.name} enrolled in ${course.name}! 📚`);
+  updateVacationQuestProgress('study');
 
   renderSchoolDashboard();
   renderRoomScene();
@@ -4711,6 +4777,168 @@ document.getElementById('collect-cookies-btn').addEventListener('click', (event)
   showToast("Collected Grandma Cookie's fresh Catnip Cookies! All active cats' Energy & Affection restored to 100%!");
   createFloater(event.clientX, event.clientY, "🍪💖✨");
 });
+
+
+// --- 🌴 MONTHLY VACATION PLANNER SYSTEM ---
+
+const VACATION_QUEST_TYPES = [
+  { type: 'groom', name: 'Groom cats 5 times', target: 5 },
+  { type: 'minigame', name: 'Hit the mouse 15 times', target: 15 },
+  { type: 'earn_coins', name: 'Earn 60 Cat Coins', target: 60 },
+  { type: 'study', name: 'Enroll cats in school 2 times', target: 2 }
+];
+
+function generateMonthlyVacationQuest() {
+  const quest = VACATION_QUEST_TYPES[Math.floor(Math.random() * VACATION_QUEST_TYPES.length)];
+  state.data.vacationQuest = {
+    type: quest.type,
+    name: quest.name,
+    target: quest.target,
+    current: 0,
+    completed: false,
+    unlocked: false,
+    scheduledDay: null
+  };
+  state.saveProfiles();
+  renderVacationPanel();
+}
+
+function updateVacationQuestProgress(type, amount = 1) {
+  if (!state.data || !state.data.vacationQuest) return;
+  const q = state.data.vacationQuest;
+  if (q.type !== type || q.completed) return;
+
+  q.current = Math.min(q.target, q.current + amount);
+  if (q.current >= q.target) {
+    q.completed = true;
+    q.unlocked = true;
+    showToast("🌴 Vacation Day Quest Complete! Go to the Calendar to schedule your holiday!");
+    audio.playPurr();
+    setTimeout(() => audio.playMeow(1.1), 100);
+  }
+  
+  state.saveProfiles();
+  renderVacationPanel();
+}
+
+function renderVacationPanel() {
+  if (!state.data || !state.data.vacationQuest) return;
+  const q = state.data.vacationQuest;
+
+  const titleEl = document.getElementById('vacation-quest-title');
+  const fillEl = document.getElementById('vacation-quest-fill');
+  const ratioEl = document.getElementById('vacation-quest-ratio');
+  const statusEl = document.getElementById('vacation-quest-status');
+  const bookBtn = document.getElementById('book-vacation-coins-btn');
+  const scheduleBtn = document.getElementById('schedule-vacation-btn');
+
+  if (titleEl) titleEl.textContent = `Quest: ${q.name}`;
+  if (ratioEl) ratioEl.textContent = `${q.current}/${q.target}`;
+  if (fillEl) {
+    const pct = Math.floor((q.current / q.target) * 100);
+    fillEl.style.width = `${pct}%`;
+  }
+
+  if (q.scheduledDay) {
+    if (statusEl) statusEl.innerHTML = `☀️ Scheduled for Day ${q.scheduledDay}! 🌴`;
+    if (bookBtn) {
+      bookBtn.disabled = true;
+      bookBtn.classList.add('disabled');
+      bookBtn.textContent = 'Scheduled';
+    }
+    if (scheduleBtn) {
+      scheduleBtn.disabled = true;
+      scheduleBtn.classList.add('disabled');
+      scheduleBtn.textContent = 'Scheduled';
+    }
+  } else if (q.unlocked) {
+    if (statusEl) statusEl.innerHTML = `✨ Ready to schedule!`;
+    if (bookBtn) {
+      bookBtn.disabled = true;
+      bookBtn.classList.add('disabled');
+      bookBtn.textContent = 'Unlocked';
+    }
+    if (scheduleBtn) {
+      scheduleBtn.disabled = false;
+      scheduleBtn.classList.remove('disabled');
+      scheduleBtn.textContent = 'Schedule 🌴';
+    }
+  } else {
+    if (statusEl) statusEl.innerHTML = `🔒 Quest Incomplete`;
+    if (bookBtn) {
+      bookBtn.disabled = false;
+      bookBtn.classList.remove('disabled');
+      bookBtn.textContent = 'Pay 50 🪙';
+    }
+    if (scheduleBtn) {
+      scheduleBtn.disabled = true;
+      scheduleBtn.classList.add('disabled');
+      scheduleBtn.textContent = 'Schedule 🌴';
+    }
+  }
+}
+
+function bookVacationWithCoins() {
+  if (!state.data || !state.data.vacationQuest) return;
+  const q = state.data.vacationQuest;
+
+  if (q.unlocked || q.scheduledDay) {
+    showToast("Vacation is already unlocked for this month!");
+    return;
+  }
+
+  if (state.data.coins < 50) {
+    showToast("Not enough Cat Coins! Play minigames to earn more.");
+    return;
+  }
+
+  state.data.coins -= 50;
+  q.completed = true;
+  q.unlocked = true;
+  state.saveProfiles();
+  updateHeaderStats();
+  renderVacationPanel();
+  
+  audio.playPurr();
+  showToast("🌴 Vacation Day booked! Click a day on the calendar and tap Schedule.");
+}
+
+function scheduleVacationDay() {
+  if (!state.data || !state.data.vacationQuest) return;
+  const q = state.data.vacationQuest;
+
+  if (!selectedCalendarDay || selectedCalendarMonth === null) {
+    alert("Please click a day on the calendar grid first!");
+    return;
+  }
+
+  if (!q.unlocked || q.scheduledDay) {
+    showToast("You must unlock the vacation day first!");
+    return;
+  }
+
+  // Register Custom Event
+  const key = `${selectedCalendarMonth}_${selectedCalendarDay}`;
+  if (!state.data.customEvents) state.data.customEvents = {};
+  state.data.customEvents[key] = {
+    type: 'vacation',
+    title: '🌴 Tropical Beach Vacation!'
+  };
+
+  q.scheduledDay = selectedCalendarDay;
+  state.saveProfiles();
+
+  renderCalendar();
+  renderVacationPanel();
+  
+  audio.playPurr();
+  setTimeout(() => audio.playMeow(1.1), 100);
+  showToast(`🌴 Beach Vacation scheduled for Day ${selectedCalendarDay}!`);
+}
+
+// Bind Button Listeners
+document.getElementById('book-vacation-coins-btn').addEventListener('click', bookVacationWithCoins);
+document.getElementById('schedule-vacation-btn').addEventListener('click', scheduleVacationDay);
 
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {

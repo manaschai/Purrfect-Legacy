@@ -2246,3 +2246,8 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
     grid-column: span 2;
   }
 }
+
+/* 🌴 Beach Resort Vacation Theme Background override */
+.play-space.vacation-style {
+  background: linear-gradient(180deg, #80deea 0%, #ffcc80 50%, #ffe082 100%) !important;
+}
