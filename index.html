@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purrfect Legacy - Gen Cat Simulator</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Floating Toast Notifications -->
+  <div id="toast-container"></div>
+
+  <div id="app">
+    <!-- 1. PROFILE SELECTION SCREEN -->
+    <section id="profile-screen" class="view active">
+      <div class="glass-card profile-card-container">
+        <h1 class="logo-text">🐾 Purrfect Legacy</h1>
+        <p class="subtitle">Select or create a profile to manage your virtual cat families</p>
+        
+        <div id="profile-list" class="profile-grid">
+          <!-- Profiles rendered dynamically here -->
+        </div>
+
+        <div class="profile-create-box">
+          <input type="text" id="new-profile-name" placeholder="Enter name..." maxlength="15">
+          <button id="create-profile-btn" class="btn primary-btn">Create Profile</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. PET STORE / BREEDING LAB SCREEN -->
+    <section id="breeding-screen" class="view">
+      <div class="breeding-container">
+        <header class="breeding-header">
+          <button class="btn secondary-btn back-to-profiles-btn">← Profiles</button>
+          <h2>🧬 The Breeding Lab</h2>
+          <div class="spacer"></div>
+        </header>
+
+        <div class="lab-main-setup">
+          <!-- Mother Selection Card -->
+          <div class="glass-card parent-setup-card" id="mother-setup-card">
+            <h3>🌸 Customize Mother</h3>
+            <div class="parent-preview-box" id="mother-preview">
+              <!-- SVG preview injected here -->
+            </div>
+            
+            <div class="customizer-controls">
+              <label>Name</label>
+              <input type="text" id="mother-name" value="Luna" placeholder="Mother's name" maxlength="12">
+
+              <label>Base Fur Color</label>
+              <div class="color-palette" id="mother-base-colors"></div>
+
+              <label>Pattern Style</label>
+              <div class="pattern-selectors" id="mother-patterns">
+                <button class="pattern-btn active" data-pattern="solid">Solid</button>
+                <button class="pattern-btn" data-pattern="tabby">Tabby</button>
+                <button class="pattern-btn" data-pattern="tuxedo">Tuxedo</button>
+                <button class="pattern-btn" data-pattern="pointed">Pointed</button>
+              </div>
+
+              <label>Pattern Accent Color</label>
+              <div class="color-palette" id="mother-accent-colors"></div>
+
+              <label>Eye Color</label>
+              <div class="color-palette" id="mother-eye-colors"></div>
+
+              <label>Tail Style</label>
+              <div class="tail-selectors" id="mother-tails">
+                <button class="tail-btn active" data-tail="long">Long</button>
+                <button class="tail-btn" data-tail="bobtail">Bobtail</button>
+                <button class="tail-btn" data-tail="fluffy">Fluffy</button>
+              </div>
+
+              <label>Personality</label>
+              <div class="personality-selectors" id="mother-personalities">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Breeding Station Center -->
+          <div class="breeding-station">
+            <div class="heart-chamber">
+              <span class="heart-pulse">❤️</span>
+            </div>
+            <button id="breed-trigger-btn" class="btn action-btn large-btn">✨ Generate Litter ✨</button>
+            <p class="desc">Combine their genes to create the next generation!</p>
+          </div>
+
+          <!-- Father Selection Card -->
+          <div class="glass-card parent-setup-card" id="father-setup-card">
+            <h3>💎 Customize Father</h3>
+            <div class="parent-preview-box" id="father-preview">
+              <!-- SVG preview injected here -->
+            </div>
+            
+            <div class="customizer-controls">
+              <label>Name</label>
+              <input type="text" id="father-name" value="Leo" placeholder="Father's name" maxlength="12">
+
+              <label>Base Fur Color</label>
+              <div class="color-palette" id="father-base-colors"></div>
+
+              <label>Pattern Style</label>
+              <div class="pattern-selectors" id="father-patterns">
+                <button class="pattern-btn active" data-pattern="solid">Solid</button>
+                <button class="pattern-btn" data-pattern="tabby">Tabby</button>
+                <button class="pattern-btn" data-pattern="tuxedo">Tuxedo</button>
+                <button class="pattern-btn" data-pattern="pointed">Pointed</button>
+              </div>
+
+              <label>Pattern Accent Color</label>
+              <div class="color-palette" id="father-accent-colors"></div>
+
+              <label>Eye Color</label>
+              <div class="color-palette" id="father-eye-colors"></div>
+
+              <label>Tail Style</label>
+              <div class="tail-selectors" id="father-tails">
+                <button class="tail-btn active" data-tail="long">Long</button>
+                <button class="tail-btn" data-tail="bobtail">Bobtail</button>
+                <button class="tail-btn" data-tail="fluffy">Fluffy</button>
+              </div>
+
+              <label>Personality</label>
+              <div class="personality-selectors" id="father-personalities">
+                <!-- Injected via JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Adoption / Kitten Selection Modal Layer -->
+        <div id="litter-reveal-section" class="litter-reveal-overlay">
+          <div class="glass-card litter-box">
+            <h2>🎀 Choose Kittens to Adopt</h2>
+            <p class="subtitle">Select 1 or 2 kittens to bring home and raise!</p>
+            
+            <div class="kitten-cards-container" id="kitten-cards-list">
+              <!-- Kitten cards injected here -->
+            </div>
+
+            <div class="kitten-adoption-action">
+              <button id="adopt-kittens-btn" class="btn primary-btn large-btn disabled" disabled>Adopt Selected (0 chosen)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2.5 DRIVING MINI-TRANSITION SCREEN -->
+    <section id="driving-screen" class="view" style="display:none;">
+      <div class="glass-card driving-container" style="max-width: 600px; width: 95%; text-align: center; display: flex; flex-direction: column; gap: 15px; align-items: center; padding: 25px;">
+        <h2 id="driving-screen-title" style="font-family: var(--display-font); font-weight: 800; color: var(--text-dark); margin: 0;">🚗 Driving Home</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 10px 0;">Steer your car left & right to collect kitten carriers & dodge traffic cones!</p>
+        
+        <!-- Game Area -->
+        <div id="driving-arena" style="position: relative; width: 100%; height: 300px; background: #81c784; border: 4px solid var(--text-dark); border-radius: 16px; overflow: hidden; box-shadow: inset 0 4px 12px rgba(0,0,0,0.15);">
+          <!-- Vertical Road lanes -->
+          <div id="driving-road" style="position: absolute; left: 50%; transform: translateX(-50%); width: 220px; height: 100%; background: #424242; border-left: 4px dashed #fff; border-right: 4px dashed #fff; overflow: hidden;">
+            <div id="road-lines-container" style="position: absolute; width: 100%; height: 200%; top: -100%;">
+              <!-- White dashes injected here -->
+            </div>
+          </div>
+
+          <!-- Player Car -->
+          <div id="driving-player-car" style="position: absolute; bottom: 15px; left: calc(50% - 18px); width: 36px; height: 55px; transition: left 0.08s ease; z-index: 5;">
+            <svg viewBox="0 0 40 60" width="100%" height="100%">
+              <rect x="2" y="8" width="6" height="12" rx="2" fill="#111" />
+              <rect x="32" y="8" width="6" height="12" rx="2" fill="#111" />
+              <rect x="2" y="40" width="6" height="12" rx="2" fill="#111" />
+              <rect x="32" y="40" width="6" height="12" rx="2" fill="#111" />
+              <rect x="5" y="4" width="30" height="52" rx="8" fill="#e53935" />
+              <path d="M 8,16 L 32,16 L 28,26 L 12,26 Z" fill="#b3e5fc" />
+              <path d="M 10,48 L 30,48 L 28,42 L 12,42 Z" fill="#b3e5fc" />
+              <circle cx="9" cy="6" r="3.5" fill="#ffeb3b" />
+              <circle cx="31" cy="6" r="3.5" fill="#ffeb3b" />
+            </svg>
+          </div>
+
+          <!-- Dynamic Elements (Obstacles, Carriers) -->
+          <div id="driving-objects-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; width: 100%; font-weight: 700; font-size: 0.9rem;">
+          <span>Speed: <span id="driving-speed-val" style="color:var(--accent-pink);">60 mph</span></span>
+          <span><span id="driving-distance-label">Distance to Home:</span> <span id="driving-distance-val">0%</span></span>
+        </div>
+
+        <div class="progress-bar-container" style="width: 100%; height: 12px; background: rgba(141,110,99,0.15);">
+          <div class="progress-fill" id="driving-progress-bar" style="width: 0%; background: var(--accent-pink); transition: width 0.1s linear;"></div>
+        </div>
+
+        <div class="driving-controls" style="display: flex; gap: 20px; width: 100%; margin-top: 5px;">
+          <button id="drive-left-btn" class="btn secondary-btn" style="flex: 1; padding: 12px; font-size: 1.1rem; font-weight: bold; border-radius:12px;">◀ Left (A)</button>
+          <button id="drive-right-btn" class="btn secondary-btn" style="flex: 1; padding: 12px; font-size: 1.1rem; font-weight: bold; border-radius:12px;">Right (D) ▶</button>
+        </div>
+
+        <!-- Success overlay -->
+        <div id="driving-success-panel" style="display: none; flex-direction: column; gap: 10px; align-items: center; margin-top: 10px; width: 100%;">
+          <p id="driving-success-msg" style="color: #2e7d32; font-weight: 700; font-size: 1.05rem;">🏠 Arrived Home Safely!</p>
+          <button id="driving-finish-btn" class="btn primary-btn large-btn" style="background:#2e7d32; color:#fff; border-color:#2e7d32; width: 100%;">Welcome Kittens Inside 🏠</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. MAIN GAME SCREEN -->
+    <section id="game-screen" class="view">
+      <div class="game-container">
+        <!-- HEADER / NAVIGATION -->
+        <header class="game-header">
+          <div class="profile-badge-box">
+            <span class="profile-name-label">Player: <strong id="header-profile-name">Guest</strong></span>
+            <button class="btn text-btn switch-profile-btn">Switch</button>
+          </div>
+          
+          <div class="game-stats-header">
+            <div class="header-stat-item coins-badge">
+              🪙 <span id="header-coins">50</span>
+            </div>
+            <div class="header-stat-item trust-badge">
+              ⭐ Trust Lvl: <span id="header-trust">1</span>
+            </div>
+            <div class="header-stat-item date-badge" id="header-date-badge" style="background:#e8eaf6; color:#283593; border:1px solid #c5cae9; cursor:pointer;" title="Click to open Calendar">
+              📅 <span id="header-date-display">Y1 M1 D1</span>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <div class="speed-control-badge">
+              ⚡ Speed: 
+              <select id="game-speed-select" class="speed-select-input">
+                <option value="1">1x (Normal)</option>
+                <option value="2" selected>2x (Fast)</option>
+                <option value="5">5x (Super)</option>
+                <option value="10">10x (Sonic)</option>
+              </select>
+            </div>
+            <button class="btn secondary-btn" id="open-calendar-btn">📅 Calendar</button>
+            <button class="btn secondary-btn" id="open-wardrobe-btn">👗 Wardrobe</button>
+            <button class="btn secondary-btn" id="open-family-tree-btn">🌳 Family Tree</button>
+            <button class="btn secondary-btn" id="open-shop-btn">🛒 Shop</button>
+            <button class="btn secondary-btn" id="open-minigame-btn">🎮 Play Game</button>
+            <button class="btn icon-btn" id="audio-toggle-btn" title="Toggle Sound">🔊</button>
+          </div>
+        </header>
+
+        <!-- ROOM LAYOUT -->
+        <main class="room-main">
+          <!-- Room Tabs -->
+          <div class="room-tabs">
+            <button class="room-tab active" data-room="living-room">🛋️ Living Room</button>
+            <button class="room-tab" data-room="bath-area">🫧 Bath Area</button>
+            <button class="room-tab" data-room="school">🏫 School</button>
+            <button class="room-tab" data-room="phone-room">🛏️ Bedroom</button>
+            <button class="room-tab" data-room="back-room">🚪 The Back Room (Parents)</button>
+          </div>
+
+          <!-- Play Space -->
+          <div class="play-space" id="play-space-container">
+            <!-- Dander/Allergy haze overlay -->
+            <div id="dander-haze" class="dander-haze-overlay" style="display:none; pointer-events:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(229,57,53,0.0); transition:background-color 0.5s ease; z-index:3;"></div>
+            
+            <!-- Interactive Room items (Study & Phone Room) -->
+            <div id="room-interactive-items" style="display:none;">
+              <!-- Allergy Meter -->
+              <div id="allergy-meter-card" style="position:absolute; top:12px; right:12px; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); border:1px solid rgba(141,110,99,0.25); border-radius:10px; padding:6px 12px; z-index:4; display:flex; flex-direction:column; gap:2px; min-width:145px; box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; color:#c62828; text-transform:uppercase; letter-spacing:0.5px;">
+                  <span>🤧 Allergens</span>
+                  <span id="allergy-value">0%</span>
+                </div>
+                <div class="progress-bar-container" style="height:6px; background:rgba(141,110,99,0.1); width:100%; border-radius:3px;">
+                  <div class="progress-fill" id="allergy-progress-bar" style="width:0%; background:#e53935; border-radius:3px; transition:width 0.2s linear;"></div>
+                </div>
+              </div>
+
+              <!-- Interactive Door -->
+              <div id="interactive-door" class="phone-room-door closed" title="Click to Open/Close Door" style="position:absolute; top:40px; left:40px; width:70px; height:130px; cursor:pointer; z-index:2;">
+                <svg viewBox="0 0 70 130" width="100%" height="100%" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));">
+                  <rect x="2" y="2" width="66" height="126" stroke="#4e342e" stroke-width="4" fill="#8d6e63" rx="2" />
+                  <rect id="door-body" x="8" y="8" width="54" height="114" fill="#a1887f" rx="1" style="transition: transform 0.5s ease; transform-origin: left center;" />
+                  <circle id="door-knob" cx="50" cy="65" r="4.5" fill="#ffd54f" />
+                </svg>
+                <div id="door-status-badge" style="position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); background:var(--text-dark); color:#fff; font-size:0.55rem; padding:1px 6px; border-radius:4px; font-weight:800; white-space:nowrap; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">CLOSED</div>
+              </div>
+
+              <!-- Wall Clock -->
+              <div id="bedroom-furniture-clock" style="position: absolute; top: 15px; left: 105px; width: 34px; height: 36px; z-index: 2; pointer-events: none;" title="Cozy Wall Clock">
+                <svg viewBox="0 0 40 40" width="100%" height="100%" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15));">
+                  <circle cx="20" cy="20" r="18" fill="#fff" stroke="#5d4037" stroke-width="2" />
+                  <!-- Clock Numbers/ticks -->
+                  <circle cx="20" cy="20" r="15" fill="none" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="1 7.2" />
+                  <!-- Hands -->
+                  <line id="clock-hour-hand" x1="20" y1="20" x2="20" y2="12" stroke="#212121" stroke-width="2.5" stroke-linecap="round" style="transform-origin: 20px 20px;" />
+                  <line id="clock-minute-hand" x1="20" y1="20" x2="20" y2="8" stroke="#37474f" stroke-width="1.8" stroke-linecap="round" style="transform-origin: 20px 20px;" />
+                  <line id="clock-second-hand" x1="20" y1="20" x2="20" y2="6" stroke="#e53935" stroke-width="0.8" stroke-linecap="round" style="transform-origin: 20px 20px;" />
+                  <!-- Center Dot -->
+                  <circle cx="20" cy="20" r="1.5" fill="#e53935" />
+                </svg>
+              </div>
+
+              <!-- Meow-OS Smart TV -->
+              <div id="bedroom-furniture-tv" style="position: absolute; bottom: 5px; left: 105px; width: 85px; height: 75px; cursor: pointer; z-index: 3;" title="Click to switch TV channels!">
+                <!-- TV Stand legs -->
+                <div style="position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 35px; height: 12px; background: #37474f; border-radius: 4px 4px 0 0;"></div>
+                <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); width: 8px; height: 6px; background: #263238;"></div>
+                <!-- TV Screen Case -->
+                <div style="position: absolute; bottom: 18px; left: 0; width: 85px; height: 57px; background: #111; border: 3px solid #37474f; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); overflow: hidden; display: flex; flex-direction: column;">
+                  <!-- Screen content display -->
+                  <div id="tv-screen-content" style="flex: 1; position: relative; background: #000; overflow: hidden; font-family: monospace; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #a5d6a7; padding: 2px;">
+                    <!-- Injected by script -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dazzling Lights (String Lights) -->
+              <div id="bedroom-furniture-lights" style="position: absolute; top: 12px; left: 130px; width: 190px; height: 30px; pointer-events: auto; z-index: 2; cursor: pointer;" title="Click to customize Dazzling Lights!">
+                <svg viewBox="0 0 220 35" width="100%" height="100%">
+                  <!-- Wire -->
+                  <path d="M 0,5 Q 55,25 110,12 Q 165,30 220,10" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" />
+                  <!-- Light Bulbs -->
+                  <circle class="decor-light-bulb" cx="20" cy="11" r="3.5" />
+                  <circle class="decor-light-bulb" cx="50" cy="18" r="3.5" />
+                  <circle class="decor-light-bulb" cx="80" cy="17" r="3.5" />
+                  <circle class="decor-light-bulb" cx="110" cy="12" r="3.5" />
+                  <circle class="decor-light-bulb" cx="140" cy="18" r="3.5" />
+                  <circle class="decor-light-bulb" cx="170" cy="21" r="3.5" />
+                  <circle class="decor-light-bulb" cx="200" cy="14" r="3.5" />
+                </svg>
+              </div>
+
+              <!-- Wall Decor: Custom Shelf (Salmon Shelf, Trophy Shelf, etc.) -->
+              <div id="bedroom-furniture-shelf" style="position: absolute; top: 50px; left: 240px; width: 80px; height: 35px; pointer-events: auto; z-index: 2; cursor: pointer;" title="Click to customize Shelf decor!">
+                <svg viewBox="0 0 80 35" width="100%" height="100%">
+                  <!-- Wooden shelf board -->
+                  <rect x="0" y="24" width="80" height="4" fill="#a1887f" rx="1" />
+                  <!-- Shelf brackets -->
+                  <polygon points="12,28 12,34 16,28" fill="#5d4037" />
+                  <polygon points="68,28 68,34 64,28" fill="#5d4037" />
+                  
+                  <!-- Salmon Shelf items -->
+                  <g id="shelf-items-salmon">
+                    <!-- Canned salmon 1 -->
+                    <rect x="8" y="12" width="12" height="12" rx="2" fill="#ff7043" />
+                    <rect x="8" y="16" width="12" height="4" fill="#fff" />
+                    <text x="14" y="20" font-size="5" text-anchor="middle" fill="#d84315">🐟</text>
+                    <!-- Canned salmon 2 -->
+                    <rect x="24" y="12" width="12" height="12" rx="2" fill="#ff8a65" />
+                    <text x="30" y="20" font-size="6" text-anchor="middle">🥫</text>
+                    <!-- Canned salmon 3 -->
+                    <rect x="40" y="12" width="12" height="12" rx="2" fill="#ff7043" />
+                    <text x="46" y="20" font-size="6" text-anchor="middle">🐟</text>
+                  </g>
+                  
+                  <!-- Trophy Shelf items -->
+                  <g id="shelf-items-trophy" style="display:none;">
+                    <polygon points="15,24 15,10 25,10 25,24" fill="#ffd54f" />
+                    <circle cx="20" cy="14" r="3" fill="#ffb300" />
+                    <rect x="42" y="14" width="16" height="10" rx="1" fill="#fff" stroke="#cfd8dc" stroke-width="0.5" />
+                    <line x1="45" y1="17" x2="55" y2="17" stroke="#37474f" stroke-width="0.5" />
+                    <line x1="45" y1="20" x2="52" y2="20" stroke="#37474f" stroke-width="0.5" />
+                  </g>
+                  
+                  <!-- Toy Shelf items -->
+                  <g id="shelf-items-toy" style="display:none;">
+                    <ellipse cx="20" cy="18" rx="6" ry="4" fill="#90a4ae" />
+                    <circle cx="16" cy="15" r="2" fill="#e0e0e0" />
+                    <path d="M 26,18 Q 32,15 35,21" fill="none" stroke="#78909c" stroke-width="1" />
+                    <circle cx="45" cy="16" r="6" fill="#e91e63" />
+                    <path d="M 39,22 Q 44,24 48,22" fill="none" stroke="#ad1457" stroke-width="1" />
+                  </g>
+                  
+                  <!-- Plant Shelf items -->
+                  <g id="shelf-items-plant" style="display:none;">
+                    <polygon points="15,24 18,16 26,16 29,24" fill="#ff8a65" />
+                    <path d="M 20,16 Q 16,6 12,12" fill="none" stroke="#4caf50" stroke-width="1.5" />
+                    <path d="M 22,16 Q 22,4 24,10" fill="none" stroke="#4caf50" stroke-width="1.5" />
+                    <path d="M 24,16 Q 28,6 30,12" fill="none" stroke="#4caf50" stroke-width="1.5" />
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Bedroom Wall Window Decor -->
+              <div id="bedroom-furniture-window" style="position: absolute; top: 15px; left: 140px; width: 62px; height: 50px; z-index: 2; border: 3px solid #5d4037; background: #81d4fa; border-radius: 4px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.15); overflow: hidden; cursor: pointer;" title="Click to customize Window view!">
+                <!-- Window grid lines -->
+                <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #5d4037;"></div>
+                <div style="position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: #5d4037;"></div>
+                
+                <!-- Sky view container -->
+                <div id="window-sky" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; transition: background 0.3s ease;">
+                  <!-- Dynamic content injected by script -->
+                </div>
+              </div>
+
+              <!-- Bedroom Custom Furniture: Rug -->
+              <div id="bedroom-furniture-rug" style="position: absolute; bottom: 5px; left: 160px; width: 145px; height: 36px; cursor: pointer; z-index: 2;" title="Click to customize Rug style!">
+                <svg viewBox="0 0 150 40" width="100%" height="100%">
+                  <ellipse id="rug-shape" cx="75" cy="20" rx="70" ry="16" fill="#efebe9" stroke="#d7ccc8" stroke-width="1.5" />
+                  <!-- Star Shape Rug Path (hidden by default) -->
+                  <path id="rug-star-path" d="M 75,4 L 81,14 L 92,14 L 83,21 L 87,32 L 75,25 L 63,32 L 67,21 L 58,14 L 69,14 Z" fill="#ffd54f" stroke="#ffb300" stroke-width="1.5" style="display:none;" />
+                  <!-- Paw Shape Rug Path (hidden by default) -->
+                  <g id="rug-paw-group" style="display:none;">
+                    <ellipse cx="75" cy="22" rx="30" ry="12" fill="#f48fb1" />
+                    <circle cx="55" cy="14" r="7" fill="#f48fb1" />
+                    <circle cx="75" cy="8" r="7" fill="#f48fb1" />
+                    <circle cx="95" cy="14" r="7" fill="#f48fb1" />
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Bedroom Custom Furniture: Bed -->
+              <div id="bedroom-furniture-bed" style="position: absolute; bottom: 5px; right: 100px; width: 180px; height: 100px; cursor: pointer; z-index: 3;" title="Click to customize Bed style!">
+                <svg viewBox="0 0 180 100" width="100%" height="100%">
+                  <!-- Headboard -->
+                  <rect id="bed-headboard" x="160" y="20" width="12" height="65" rx="3" fill="#8d6e63" />
+                  <!-- Footboard -->
+                  <rect id="bed-footboard" x="8" y="55" width="12" height="35" rx="3" fill="#8d6e63" />
+                  <!-- Main Mattress Base -->
+                  <rect id="bed-mattress" x="20" y="48" width="140" height="38" rx="4" fill="#eceff1" />
+                  <!-- Sheet Blanket (Customizable) -->
+                  <rect id="bed-sheets" x="20" y="52" width="120" height="34" rx="2" fill="#1565c0" />
+                  <!-- Pillow (Customizable) -->
+                  <rect id="bed-pillow" x="135" y="44" width="22" height="24" rx="4" fill="#1e88e5" />
+                  <!-- Bed Legs -->
+                  <rect x="165" y="85" width="4" height="12" fill="#5d4037" />
+                  <rect x="12" y="90" width="4" height="8" fill="#5d4037" />
+                </svg>
+              </div>
+
+              <!-- Bedroom Custom Furniture: Nightstand -->
+              <div id="bedroom-nightstand" style="position: absolute; bottom: 5px; right: 35px; width: 60px; height: 60px; z-index: 3; background: #5d4037; border: 3.5px solid #3e2723; border-radius: 6px 6px 0 0; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                <!-- Drawers and Handles -->
+                <div style="border-bottom: 2.5px solid #3e2723; height: 24px; position: relative;">
+                  <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 5px; background: #ffd54f; border-radius: 2px;"></div>
+                </div>
+                <div style="position: relative; height: 24px;">
+                  <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 14px; height: 5px; background: #ffd54f; border-radius: 2px;"></div>
+                </div>
+              </div>
+
+              <!-- Bedroom Custom Furniture: Lamp -->
+              <div id="bedroom-furniture-lamp" style="position: absolute; bottom: 65px; right: 10px; width: 28px; height: 48px; cursor: pointer; z-index: 4;" title="Click to customize Lamp style!">
+                <svg viewBox="0 0 30 50" width="100%" height="100%">
+                  <!-- Base stem -->
+                  <rect x="13" y="30" width="4" height="15" fill="#ffd54f" />
+                  <ellipse cx="15" cy="45" rx="8" ry="3" fill="#ffd54f" />
+                  <!-- Lamp Shade (Customizable) -->
+                  <path id="lamp-shade" d="M 6,30 L 24,30 L 20,12 L 10,12 Z" fill="#ffe082" />
+                  <!-- Cute Ears / Details (Customizable) -->
+                  <polygon id="lamp-ear-l" points="10,12 8,5 13,9" fill="#ffca28" style="display:none;" />
+                  <polygon id="lamp-ear-r" points="20,12 22,5 17,9" fill="#ffca28" style="display:none;" />
+                  <!-- Neon Glow / Light beam (Customizable) -->
+                  <polygon id="lamp-glow" points="15,30 0,50 30,50" fill="rgba(255,235,59,0.25)" style="pointer-events:none;" />
+                </svg>
+              </div>
+
+              <!-- Interactive Phone (Sits on top of Nightstand) -->
+              <div id="interactive-phone" class="phone-room-phone" title="Click to pick up Phone" style="position:absolute; bottom:65px; right:42px; width:46px; height:38px; cursor:pointer; z-index:4;">
+                <svg viewBox="0 0 60 50" width="100%" height="100%" style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));">
+                  <!-- Phone Base -->
+                  <rect x="15" y="22" width="30" height="16" rx="4" fill="#212121" />
+                  <circle cx="21" cy="30" r="1.5" fill="#fff" opacity="0.6" />
+                  <circle cx="26" cy="30" r="1.5" fill="#fff" opacity="0.6" />
+                  <circle cx="31" cy="30" r="1.5" fill="#fff" opacity="0.6" />
+                  <!-- Handset Receiver -->
+                  <path d="M 10,14 C 20,9 40,9 50,14 L 46,20 C 38,17 22,17 14,20 Z" fill="#111111" />
+                </svg>
+                <div style="position:absolute; top:-20px; left:50%; transform:translateX(-50%); background:#2e7d32; color:#fff; font-size:0.45rem; padding:1px 4px; border-radius:3px; font-weight:800; white-space:nowrap; letter-spacing:0.5px; box-shadow:0 1px 2px rgba(0,0,0,0.1); animation: bounce-phone-label 1s infinite alternate;">☎️ PICK UP</div>
+              </div>
+            </div>
+
+            <!-- Background room decorators can render here -->
+            <div class="room-background-scene" id="room-scene">
+              <!-- Active Room scene styling -->
+            </div>
+
+            <!-- Floating numbers container for text alerts -->
+            <div id="floaters-layer"></div>
+
+            <!-- Dynamic Cat Characters -->
+            <div class="cats-container" id="cats-render-area">
+              <!-- Rendered SVGs injected here -->
+            </div>
+          </div>
+
+          <!-- BOTTOM ACTION DRAWER AND CAT DETAILS -->
+          <section class="care-and-stats-section">
+            <!-- Active Cat Selectors (if 2 cats are adopted) -->
+            <div class="cat-selector-tabs" id="active-cat-selectors">
+              <!-- Tabs for switching focus between 1-2 cats -->
+            </div>
+
+            <div class="cat-details-grid">
+              <!-- Focus Cat Card -->
+              <div class="glass-card stat-card" id="focus-cat-card">
+                <div class="cat-meta-info">
+                  <div>
+                    <h3 id="focus-cat-name">Cat Name</h3>
+                    <span class="badge personality-badge" id="focus-cat-personality">Playful</span>
+                    <span class="badge generation-badge" id="focus-cat-gen">Gen 1</span>
+                  </div>
+                  <div class="growth-box">
+                    <span class="growth-text" id="focus-cat-age">Kitten (0%)</span>
+                    <div class="progress-bar-container mini-bar">
+                      <div class="progress-fill growth-fill" id="focus-cat-growth-bar" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pet Care Stats -->
+                <div class="stats-bars-grid">
+                  <div class="stat-bar-group">
+                    <span class="stat-icon">🍖</span>
+                    <span class="stat-name">Hunger</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill hunger-fill" id="stat-hunger-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="stat-value" id="stat-hunger-val">100/100</span>
+                  </div>
+
+                  <div class="stat-bar-group">
+                    <span class="stat-icon">💧</span>
+                    <span class="stat-name">Thirst</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill thirst-fill" id="stat-thirst-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="stat-value" id="stat-thirst-val">100/100</span>
+                  </div>
+
+                  <div class="stat-bar-group">
+                    <span class="stat-icon">❤️</span>
+                    <span class="stat-name">Affection</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill affection-fill" id="stat-affection-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="stat-value" id="stat-affection-val">100/100</span>
+                  </div>
+
+                  <div class="stat-bar-group">
+                    <span class="stat-icon">⚡</span>
+                    <span class="stat-name">Energy</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill energy-fill" id="stat-energy-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="stat-value" id="stat-energy-val">100/100</span>
+                  </div>
+
+                  <div class="stat-bar-group">
+                    <span class="stat-icon">✨</span>
+                    <span class="stat-name">Cleanliness</span>
+                    <div class="progress-bar-container">
+                      <div class="progress-fill cleanliness-fill" id="stat-cleanliness-bar" style="width: 100%"></div>
+                    </div>
+                    <span class="stat-value" id="stat-cleanliness-val">100/100</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Care Actions Panel -->
+              <div class="glass-card actions-card" id="care-actions-card">
+                <h3>🌸 Care Center</h3>
+                <div class="actions-grid">
+                  <button class="btn action-btn care-btn" data-action="feed">
+                    <span class="btn-icon">🍖</span> Feed Kitten
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="water">
+                    <span class="btn-icon">💧</span> Give Water
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="play">
+                    <span class="btn-icon">🧸</span> Play Toy
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="pet">
+                    <span class="btn-icon">🖐️</span> Pet Cat
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="groom">
+                    <span class="btn-icon">🪮</span> Groom/Brush
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="bath" id="give-bath-btn" title="Only available in Bath Area" disabled>
+                    <span class="btn-icon">🛁</span> Give Bath
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="sleep">
+                    <span class="btn-icon">🛏️</span> Put to Bed
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="clean">
+                    <span class="btn-icon">🧹</span> Scoop Litter
+                  </button>
+                  <button class="btn action-btn care-btn" data-action="clean-room" id="clean-room-btn" title="Only available in Study when cats are out" disabled>
+                    <span class="btn-icon">🔌</span> Vacuum Room
+                  </button>
+                  <button class="btn action-btn breed-next-btn hidden" id="breed-next-generation-btn">
+                    <span class="btn-icon">🧬</span> Find a Mate!
+                  </button>
+                </div>
+              </div>
+
+              <!-- School Actions Panel -->
+              <div class="glass-card actions-card" id="school-actions-card" style="display: none;">
+                <h3>🏫 School Academy</h3>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px; line-height:1.25;">Enroll in courses to earn degrees & unlock permanent trait bonuses!</p>
+                <div class="actions-grid school-actions-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+                  <button class="btn action-btn school-btn" data-course="cat-culus" style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; text-align:center;">
+                    <span>📐 Cat-culus</span>
+                    <strong style="font-size:0.75rem; color:var(--accent-pink);">25 Coins</strong>
+                    <span style="font-size:0.65rem; color:var(--text-muted); line-height:1;">+20% Growth speed</span>
+                  </button>
+                  <button class="btn action-btn school-btn" data-course="nap-ology" style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; text-align:center;">
+                    <span>💤 Nap-ology</span>
+                    <strong style="font-size:0.75rem; color:var(--accent-pink);">20 Coins</strong>
+                    <span style="font-size:0.65rem; color:var(--text-muted); line-height:1;">+25% Sleep Rate</span>
+                  </button>
+                  <button class="btn action-btn school-btn" data-course="meow-sic" style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; text-align:center;">
+                    <span>🎹 Meow-sic</span>
+                    <strong style="font-size:0.75rem; color:var(--accent-pink);">30 Coins</strong>
+                    <span style="font-size:0.65rem; color:var(--text-muted); line-height:1;">+35% Pet Affection</span>
+                  </button>
+                  <button class="btn action-btn school-btn" data-course="hunting-101" style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; text-align:center;">
+                    <span>🐭 Hunt 101</span>
+                    <strong style="font-size:0.75rem; color:var(--accent-pink);">40 Coins</strong>
+                    <span style="font-size:0.65rem; color:var(--text-muted); line-height:1;">+1 Coin per catch</span>
+                  </button>
+                  <button class="btn action-btn school-btn" data-course="self-grooming" style="display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 4px; text-align:center;">
+                    <span>🧼 Grooming</span>
+                    <strong style="font-size:0.75rem; color:var(--accent-pink);">25 Coins</strong>
+                    <span style="font-size:0.65rem; color:var(--text-muted); line-height:1;">-30% Clean decay</span>
+                  </button>
+                </div>
+                
+                <!-- Study status bar -->
+                <div id="study-progress-container" style="display:none; margin-top:12px; border-top:1px solid rgba(141,110,99,0.15); padding-top:10px;">
+                  <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; margin-bottom:4px;">
+                    <span id="study-progress-label">Studying...</span>
+                    <span id="study-progress-time">10s left</span>
+                  </div>
+                  <div class="progress-bar-container" style="height:10px;">
+                    <div class="progress-fill" id="study-progress-bar" style="width: 0%; background:var(--accent-pink); transition: width 0.1s linear;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </section>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- INTERACTIVE PHONE MODAL -->
+    <div class="modal-overlay" id="phone-modal">
+      <div class="glass-card modal-content phone-modal-content" style="max-width: 330px; width: 95%; border-radius: 36px; padding: 15px; border: 6px solid var(--text-dark); background: #263238; box-shadow: 0 12px 30px rgba(0,0,0,0.3); position: relative;">
+        <!-- Close Button (Power button / exit) -->
+        <button class="close-modal-btn" style="position: absolute; top: 10px; right: 12px; background: #c62828; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; cursor: pointer; z-index: 99; font-weight: bold; line-height: 1; border: 1.5px solid #ff8a80;">&times;</button>
+        
+        <!-- Phone Status Notch -->
+        <div style="width: 110px; height: 16px; background: var(--text-dark); border-radius: 0 0 10px 10px; margin: -15px auto 8px auto; position: relative; z-index: 10;"></div>
+        
+        <!-- Virtual Phone Screen Container -->
+        <div id="virtual-phone-screen" style="position: relative; width: 100%; height: 390px; background: #eceff1; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; border: 3px solid #111; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          
+          <!-- System Status Bar -->
+          <div style="height: 20px; background: #cfd8dc; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.6rem; font-weight: 700; color: #37474f; border-bottom: 1px solid rgba(0,0,0,0.05); z-index: 9;">
+            <span>📡 Cat-Cell</span>
+            <span>12:00 PM</span>
+            <span>🔋 100%</span>
+          </div>
+
+          <!-- Phone App Screen Body -->
+          <div id="phone-apps-body" style="flex: 1; overflow-y: auto; position: relative; display: flex; flex-direction: column;">
+            
+            <!-- 1. HOME SCREEN VIEW -->
+            <div class="phone-view" id="phone-view-home" style="display: flex; flex-direction: column; height: 100%; padding: 12px; background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); justify-content: space-between;">
+              <div style="display:flex; flex-direction:column; flex:1;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: var(--display-font); text-align: center; margin-top: 5px; margin-bottom: 20px; letter-spacing: 0.5px;">Dial-a-Cat OS</div>
+                
+                <!-- 3-Column Round Emoji Icons Grid -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 10px; padding: 5px 0; justify-items: center;">
+                  <!-- Dialer -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="dialer" style="background: #4caf50; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      📞
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Dialer</span>
+                  </div>
+                  <!-- Chat -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="chat" style="background: #2196f3; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      💬
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Chat</span>
+                  </div>
+                  <!-- Camera -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="cam" style="background: #9c27b0; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      📷
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Camera</span>
+                  </div>
+                  <!-- Browser -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="cathrome" style="background: #e91e63; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      🌐
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Browser</span>
+                  </div>
+                  <!-- Meowzon -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="meowzon" style="background: #ff9800; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      🛒
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Meow-zon</span>
+                  </div>
+                  <!-- Gallery -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="gallery" style="background: #009688; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      🖼️
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Gallery</span>
+                  </div>
+                  <!-- Cat-Bank -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="bank" style="background: #3f51b5; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      💵
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Cat-Bank</span>
+                  </div>
+                  <!-- Cat-Maps -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="maps" style="background: #00bcd4; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      🌍
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Cat-Maps</span>
+                  </div>
+                  <!-- Bed-Craft -->
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 60px;">
+                    <button class="phone-app-btn" data-target="furnish" style="background: #e91e63; color: white; border: none; border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; cursor: pointer; box-shadow: 0 3px 6px rgba(0,0,0,0.2); transition: transform 0.15s ease;">
+                      🛋️
+                    </button>
+                    <span style="font-size: 0.55rem; font-weight: 700; color: #fff; margin-top: 3px; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">Bed-Craft</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Bottom Dock (including Settings⚙️) -->
+              <div style="background: rgba(255,255,255,0.3); backdrop-filter: blur(8px); border-radius: 16px; padding: 6px; display: flex; justify-content: space-around; align-items: center; width: 100%;">
+                <span style="font-size: 1.1rem;">🐾</span>
+                <span style="font-size: 1.1rem;">🐟</span>
+                <button class="phone-app-btn" data-target="settings" style="background: rgba(255,255,255,0.45); border: none; border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">⚙️</button>
+                <span style="font-size: 1.1rem;">🧶</span>
+                <span style="font-size: 1.1rem;">❤️</span>
+              </div>
+            </div>
+
+            <!-- 2. DIALER VIEW -->
+            <div class="phone-view" id="phone-view-dialer" style="display: none; flex-direction: column; padding: 10px; gap: 8px; background: #eceff1; height: 100%;">
+              <div class="phone-screen-display" style="background:#1e1e1e; border-radius:12px; padding:8px; height:85px; display:flex; flex-direction:column; justify-content:space-between; color:#a5d6a7; font-family:'Courier New', monospace; text-align:left; box-shadow:inset 0 2px 5px rgba(0,0,0,0.4); border:1.5px solid #78909c;">
+                <div id="phone-status" style="font-size:0.5rem; color:#81c784; text-transform:uppercase; font-weight:700;">📡 CONNECTED • LINE 1</div>
+                <div id="phone-message" style="font-size:0.65rem; overflow-y:auto; line-height:1.2; max-height: 48px;">Ready to dial. Enter a number to call or connect...</div>
+                <div id="phone-number-field" style="font-size:1rem; font-weight:bold; color:#fff; text-align:right; letter-spacing:1px;">-</div>
+              </div>
+              <div class="phone-dial-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:2px;">
+                <button class="btn phone-dial-btn" data-val="1" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">1</button>
+                <button class="btn phone-dial-btn" data-val="2" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">2</button>
+                <button class="btn phone-dial-btn" data-val="3" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">3</button>
+                <button class="btn phone-dial-btn" data-val="4" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">4</button>
+                <button class="btn phone-dial-btn" data-val="5" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">5</button>
+                <button class="btn phone-dial-btn" data-val="6" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">6</button>
+                <button class="btn phone-dial-btn" data-val="7" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">7</button>
+                <button class="btn phone-dial-btn" data-val="8" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">8</button>
+                <button class="btn phone-dial-btn" data-val="9" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">9</button>
+                <button class="btn phone-dial-btn" data-val="*" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">*</button>
+                <button class="btn phone-dial-btn" data-val="0" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">0</button>
+                <button class="btn phone-dial-btn" data-val="#" style="padding:6px; font-weight:700; border-radius:8px; font-size: 0.9rem;">#</button>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button id="phone-clear-btn" class="btn secondary-btn" style="flex:1; padding:6px; font-size:0.75rem; border-radius:8px;">Clear</button>
+                <button id="phone-call-btn" class="btn primary-btn" style="flex:1.5; padding:6px; font-size:0.75rem; background:#2e7d32; color:#fff; border-color:#2e7d32; border-radius:8px;">Call</button>
+              </div>
+            </div>
+
+            <!-- 3. MESSAGES / CHAT VIEW -->
+            <div class="phone-view" id="phone-view-chat" style="display: none; flex-direction: column; background: #eceff1; height: 100%;">
+              <!-- Contact Header Selector -->
+              <div style="background: #37474f; color: white; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem;">
+                <span>To:</span>
+                <select id="phone-chat-contact-select" style="background:#546e7a; color:#fff; border:none; border-radius:6px; padding:2px 8px; font-size:0.75rem; font-weight:bold; cursor:pointer;">
+                  <option value="vet">🩺 Dr. Whisker (Vet)</option>
+                  <option value="kid_1" id="phone-contact-kid1">🐱 Kid: Pip</option>
+                  <option value="kid_2" id="phone-contact-kid2">🐱 Kid: Mochi</option>
+                </select>
+              </div>
+              <!-- Chat Bubble Display Scroller -->
+              <div id="phone-chat-display" style="flex: 1; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 0.7rem; background: #f5f5f5;">
+                <!-- Chat bubbles injected here -->
+              </div>
+              <!-- Input Bar -->
+              <div style="display: flex; gap: 5px; padding: 6px; background: #cfd8dc; border-top: 1px solid rgba(0,0,0,0.1);">
+                <input type="text" id="phone-chat-input" placeholder="Type a message..." style="flex: 1; border: 1px solid #b0bec5; border-radius: 12px; padding: 4px 10px; font-size: 0.75rem; outline: none;" maxlength="40">
+                <button id="phone-chat-send-btn" class="btn primary-btn" style="padding: 4px 10px; font-size: 0.7rem; background: #2196f3; color: white; border: none; border-radius: 12px;">Send</button>
+              </div>
+            </div>
+
+            <!-- 4. MEOW-ZON ORDERING WEB -->
+            <div class="phone-view" id="phone-view-meowzon" style="display: none; flex-direction: column; background: #fafafa; height: 100%; padding: 8px; gap: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ff9800; padding-bottom: 4px; margin-bottom: 4px;">
+                <span style="font-family: var(--display-font); font-weight: 800; color: #ff9800; font-size: 0.95rem;">🛒 meow-zon</span>
+                <span style="font-size: 0.7rem; font-weight: 700; color: #ff9800;">🪙 <span id="phone-meowzon-coins">0</span></span>
+              </div>
+              <!-- Product list scroller -->
+              <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px;">
+                <!-- Product Card 1 -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">🐟</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Salmon Delivery</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Hunger +40</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="food" data-cost="15" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">15 🪙</button>
+                </div>
+                <!-- Product Card 2 -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">🍶</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Spring Water</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Thirst +40</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="water" data-cost="10" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">10 🪙</button>
+                </div>
+                <!-- Product Card 3 -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">🧶</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Catnip Yarn</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Affection +30</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="toy" data-cost="12" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">12 🪙</button>
+                </div>
+                <!-- Product Card 4 -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">🧼</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Dry Shampoo</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Cleanliness +40</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="shampoo" data-cost="18" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">18 🪙</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. CATHROME BROWSER -->
+            <div class="phone-view" id="phone-view-cathrome" style="display: none; flex-direction: column; background: #ffffff; height: 100%;">
+              <!-- Browser Search Bar -->
+              <div style="background: #f1f3f4; border-bottom: 1px solid #dadce0; padding: 6px; display: flex; gap: 4px; align-items: center;">
+                <span style="font-size: 0.8rem;">🔒</span>
+                <input type="text" id="phone-browser-url-input" value="www.meowgle.com" style="flex: 1; border: 1px solid #dadce0; border-radius: 12px; padding: 2px 10px; font-size: 0.6rem; background: white; color: #3c4043; outline:none;">
+                <button id="phone-browser-search-btn" class="btn" style="padding: 2px 8px; font-size: 0.55rem; border-radius:8px; border:1px solid #dadce0; background:white;">Go</button>
+              </div>
+              <!-- Browser Content Display Window -->
+              <div id="phone-browser-content" style="flex: 1; overflow-y: auto; padding: 10px; font-size: 0.65rem; text-align: left; line-height: 1.35; color: #202124;">
+                <!-- Injected browser window web page -->
+              </div>
+            </div>
+
+            <!-- 6. CAMERA APP -->
+            <div class="phone-view" id="phone-view-cam" style="display: none; flex-direction: column; background: #000; height: 100%; justify-content: space-between; padding: 10px; color: #fff;">
+              <div style="font-size: 0.65rem; color: #aaa; text-align: center; text-transform: uppercase;">📸 Cat-Cam Viewfinder</div>
+              <!-- Camera display window -->
+              <div style="border: 2px solid #555; background: #111; border-radius: 12px; height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.5);">
+                <!-- Autofocus reticle -->
+                <div style="position: absolute; width: 40px; height: 40px; border: 2px dashed #4caf50; border-radius: 50%; opacity: 0.7; display: flex; align-items: center; justify-content: center;">
+                  <span style="font-size: 0.6rem; color: #4caf50;">+</span>
+                </div>
+                <!-- Snapshot details labels -->
+                <div style="position: absolute; bottom: 8px; left: 8px; right: 8px; text-align: left; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; font-size: 0.6rem;">
+                  <span style="display:block; font-weight:800; color:#ffd54f;">ROOM: <span id="phone-cam-room" style="color:#fff;">Living Room</span></span>
+                  <span style="display:block; font-weight:800; color:#ffd54f;">CATS: <span id="phone-cam-cats" style="color:#fff;">Luna & Leo</span></span>
+                </div>
+                <!-- Shutter Flash effect -->
+                <div id="phone-cam-flash" style="position: absolute; top:0; left:0; width:100%; height:100%; background:white; opacity:0; pointer-events:none; transition: opacity 0.15s ease;"></div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <button id="phone-cam-shutter" style="width: 55px; height: 55px; border-radius: 50%; background: #e53935; border: 4px solid #fff; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); font-size: 1.5rem; display: flex; align-items: center; justify-content: center; outline: none;">📸</button>
+                <span style="font-size: 0.55rem; color: #aaa;">Tap Shutter to Save Photo</span>
+              </div>
+            </div>
+
+            <!-- 7. GALLERY APP -->
+            <div class="phone-view" id="phone-view-gallery" style="display: none; flex-direction: column; background: #eceff1; height: 100%; padding: 8px; gap: 8px;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #37474f; font-size: 0.95rem; border-bottom: 2px solid #009688; padding-bottom: 4px;">🖼️ Photo Gallery</div>
+              <!-- Gallery Grid -->
+              <div id="phone-gallery-list" style="flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; align-content: start; padding: 2px;">
+                <!-- Polaroid cards will be injected here -->
+              </div>
+            </div>
+
+            <!-- 8. SETTINGS APP -->
+            <div class="phone-view" id="phone-view-settings" style="display: none; flex-direction: column; background: #f5f5f5; height: 100%; padding: 10px; gap: 10px; color: var(--text-dark); text-align: left;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #37474f; font-size: 0.95rem; border-bottom: 2px solid #546e7a; padding-bottom: 4px;">⚙️ OS Settings</div>
+              
+              <!-- Wallpaper setting -->
+              <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 8px; display:flex; flex-direction:column; gap:6px;">
+                <strong style="font-size: 0.7rem; color: #37474f;">🌅 Phone Wallpaper</strong>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;">
+                  <button class="btn wallpaper-btn" data-wallpaper="blue" style="font-size: 0.6rem; padding: 6px 2px; border-radius: 8px; background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); color: white; text-shadow:0 1px 1px #555;">Default Blue</button>
+                  <button class="btn wallpaper-btn" data-wallpaper="pink" style="font-size: 0.6rem; padding: 6px 2px; border-radius: 8px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: white; text-shadow:0 1px 1px #555;">Sakura Pink</button>
+                  <button class="btn wallpaper-btn" data-wallpaper="green" style="font-size: 0.6rem; padding: 6px 2px; border-radius: 8px; background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); color: white; text-shadow:0 1px 1px #555;">Meadow Green</button>
+                  <button class="btn wallpaper-btn" data-wallpaper="dark" style="font-size: 0.6rem; padding: 6px 2px; border-radius: 8px; background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); color: white; text-shadow:0 1px 1px #555;">Dark Mode</button>
+                </div>
+              </div>
+
+              <!-- About OS -->
+              <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 8px; display:flex; flex-direction:column; gap:4px; font-size: 0.6rem; color: #555;">
+                <strong style="font-size: 0.7rem; color: #37474f; margin-bottom: 2px;">ℹ️ System Information</strong>
+                <span>• OS: Dial-a-Cat OS 3.1</span>
+                <span>• Carrier: Cat-Cell Network Inc.</span>
+                <span>• Processor: Meow-Dragon 8 Gen 1</span>
+                <span>• Storage: 100% Cozy (64 GB)</span>
+                <span>• Developed by: Secret Cat Council</span>
+              </div>
+            </div>
+
+            <!-- 9. CAT-BANK APP -->
+            <div class="phone-view" id="phone-view-bank" style="display: none; flex-direction: column; background: #e8f5e9; height: 100%; padding: 10px; gap: 8px; color: var(--text-dark); text-align: left;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #1b5e20; font-size: 0.95rem; border-bottom: 2px solid #2e7d32; padding-bottom: 4px; display:flex; justify-content:space-between; align-items:center;">
+                <span>💵 Cat-Bank Savings</span>
+                <span style="font-size: 0.6rem; background:#c8e6c9; color:#1b5e20; padding:2px 6px; border-radius:10px;">Interest: 5%/day</span>
+              </div>
+              
+              <!-- Balances info panel -->
+              <div style="background: white; border: 1px solid #c8e6c9; border-radius: 10px; padding: 10px; display:flex; flex-direction:column; gap:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; font-size: 0.65rem; color:#666;">
+                  <span>Wallet Cash:</span>
+                  <strong style="color:#2e7d32;">🪙 <span id="phone-bank-wallet-coins">0</span></strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size: 0.75rem; font-weight:bold; border-top: 1px dashed #e0e0e0; padding-top:6px;">
+                  <span>Savings Balance:</span>
+                  <strong style="color:#1b5e20; font-size:0.85rem;">🪙 <span id="phone-bank-savings-coins">0</span></strong>
+                </div>
+              </div>
+
+              <!-- Transaction Controls -->
+              <div style="background: white; border: 1px solid #c8e6c9; border-radius: 10px; padding: 10px; display:flex; flex-direction:column; gap:8px;">
+                <span style="font-size: 0.6rem; font-weight:bold; color:#1b5e20; text-transform:uppercase;">💰 Deposit Cash</span>
+                <div style="display:flex; gap:6px;">
+                  <button id="phone-bank-deposit-10" class="btn" style="flex:1; font-size: 0.55rem; padding: 6px 0; background:#c8e6c9; border:1px solid #a5d6a7; color:#1b5e20; border-radius:8px; font-weight:bold;">Deposit 10</button>
+                  <button id="phone-bank-deposit-all" class="btn" style="flex:1.2; font-size: 0.55rem; padding: 6px 0; background:#2e7d32; border:1px solid #2e7d32; color:#fff; border-radius:8px; font-weight:bold;">Deposit All</button>
+                </div>
+                
+                <span style="font-size: 0.6rem; font-weight:bold; color:#c62828; text-transform:uppercase; margin-top:4px;">💸 Withdraw Cash</span>
+                <div style="display:flex; gap:6px;">
+                  <button id="phone-bank-withdraw-10" class="btn" style="flex:1; font-size: 0.55rem; padding: 6px 0; background:#ffcdd2; border:1px solid #ef9a9a; color:#c62828; border-radius:8px; font-weight:bold;">Withdraw 10</button>
+                  <button id="phone-bank-withdraw-all" class="btn" style="flex:1.2; font-size: 0.55rem; padding: 6px 0; background:#c62828; border:1px solid #c62828; color:#fff; border-radius:8px; font-weight:bold;">Withdraw All</button>
+                </div>
+              </div>
+
+              <!-- Friendly tip -->
+              <div style="font-size: 0.52rem; color:#666; line-height:1.2; padding:0 4px;">
+                💡 <em>Cat-Bank pays out a daily 5% compound interest payout at midnight of every calendar day! Put your extra cash to work.</em>
+              </div>
+            </div>
+
+            <!-- 10. CAT-MAPS APP -->
+            <div class="phone-view" id="phone-view-maps" style="display: none; flex-direction: column; background: #e0f7fa; height: 100%; padding: 10px; gap: 8px; color: var(--text-dark); text-align: left;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #00838f; font-size: 0.95rem; border-bottom: 2px solid #00acc1; padding-bottom: 4px;">🌍 Cat-Maps Local GPS</div>
+              
+              <!-- Map Canvas Wrapper -->
+              <div style="background: #e8f5e9; border: 2px solid #b2ebf2; border-radius: 12px; height: 160px; position: relative; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);">
+                <svg viewBox="0 0 280 160" width="100%" height="100%">
+                  <!-- Local green parks and rivers paths -->
+                  <rect width="280" height="160" fill="#c8e6c9" />
+                  <path d="M 0,130 C 80,120 120,40 280,30" stroke="#80deea" stroke-width="12" fill="none" opacity="0.8" />
+                  
+                  <!-- Local Roads network -->
+                  <path d="M 40,0 L 40,160 M 0,80 L 280,80 M 120,0 L 220,160" stroke="#eceff1" stroke-width="6" fill="none" />
+                  
+                  <!-- Point 1: Home 🏠 -->
+                  <g class="map-node" data-loc="home" style="cursor:pointer;">
+                    <circle cx="35" cy="40" r="10" fill="#2e7d32" stroke="#fff" stroke-width="1.5" />
+                    <text x="35" y="43" font-size="7" text-anchor="middle" fill="#fff">🏠</text>
+                    <text x="35" y="27" font-size="5" font-weight="bold" text-anchor="middle" fill="#1b5e20">HOME</text>
+                  </g>
+                  
+                  <!-- Point 2: Bath Area 🛁 -->
+                  <g class="map-node" data-loc="bath" style="cursor:pointer;">
+                    <circle cx="120" cy="30" r="10" fill="#0288d1" stroke="#fff" stroke-width="1.5" />
+                    <text x="120" y="33" font-size="7" text-anchor="middle" fill="#fff">🛁</text>
+                    <text x="120" y="17" font-size="5" font-weight="bold" text-anchor="middle" fill="#01579b">SPA</text>
+                  </g>
+                  
+                  <!-- Point 3: School 🏫 -->
+                  <g class="map-node" data-loc="school" style="cursor:pointer;">
+                    <circle cx="70" cy="110" r="10" fill="#fbc02d" stroke="#fff" stroke-width="1.5" />
+                    <text x="70" y="113" font-size="7" text-anchor="middle" fill="#fff">🏫</text>
+                    <text x="70" y="97" font-size="5" font-weight="bold" text-anchor="middle" fill="#f57f17">ACADEMY</text>
+                  </g>
+                  
+                  <!-- Point 4: Garden 🌿 -->
+                  <g class="map-node" data-loc="garden" style="cursor:pointer;">
+                    <circle cx="180" cy="90" r="10" fill="#33691e" stroke="#fff" stroke-width="1.5" />
+                    <text x="180" y="93" font-size="7" text-anchor="middle" fill="#fff">🌿</text>
+                    <text x="180" y="77" font-size="5" font-weight="bold" text-anchor="middle" fill="#1b5e20">GARDEN</text>
+                  </g>
+                  
+                  <!-- Point 5: Fish Market 🐟 -->
+                  <g class="map-node" data-loc="market" style="cursor:pointer;">
+                    <circle cx="230" cy="130" r="10" fill="#e65100" stroke="#fff" stroke-width="1.5" />
+                    <text x="230" y="133" font-size="7" text-anchor="middle" fill="#fff">🐟</text>
+                    <text x="230" y="117" font-size="5" font-weight="bold" text-anchor="middle" fill="#e65100">MARKET</text>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Location Detail Panel -->
+              <div style="background: white; border: 1px solid #b2ebf2; border-radius: 10px; padding: 8px; display:flex; flex-direction:column; gap:4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <strong id="phone-maps-name" style="font-size: 0.75rem; color: #00838f;">🗺️ Select a landmark</strong>
+                <span id="phone-maps-desc" style="font-size: 0.6rem; color: #555; min-height: 28px; line-height: 1.25;">Tap a point of interest on the map to find route info, coordinates, traffic reports, and take a joyride!</span>
+                <button id="phone-maps-drive-btn" class="btn primary-btn" style="display:none; font-size: 0.6rem; padding: 5px 0; background: #00acc1; color: white; border: none; border-radius: 6px; font-weight:bold; margin-top: 4px; box-shadow: 0 2px 4px rgba(0,172,193,0.3);">🚗 Joyride There (+15 Coins Bonus!)</button>
+              </div>
+            </div>
+
+            <!-- 10. BED-CRAFT DECOR VIEW -->
+            <div class="phone-view" id="phone-view-furnish" style="display: none; flex-direction: column; background: #fafafa; height: 100%; padding: 8px; gap: 8px;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #ad1457; font-size: 0.95rem; border-bottom: 2px solid #e91e63; padding-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                <span>🛋️ Bed-Craft Decor</span>
+                <span style="font-size: 0.6rem; background: #e91e63; color: white; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight:bold;">Free Custom</span>
+              </div>
+              <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px;">
+                <!-- 1. BED STYLE -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">🛏️ Bed Style:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="bed" data-val="royal" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">👑 Royal Blue</button>
+                    <button class="btn furnish-btn" data-type="bed" data-val="sakura" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌸 Sakura Pink</button>
+                    <button class="btn furnish-btn" data-type="bed" data-val="galaxy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌌 Galaxy Star</button>
+                    <button class="btn furnish-btn" data-type="bed" data-val="mint" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🍃 Mint White</button>
+                  </div>
+                </div>
+
+                <!-- 2. RUG STYLE -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">🧶 Rug Style:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="rug" data-val="cozy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🧎 Cream Fluffy</button>
+                    <button class="btn furnish-btn" data-type="rug" data-val="star" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">⭐️ Golden Star</button>
+                    <button class="btn furnish-btn" data-type="rug" data-val="paw" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🐾 Paw Print</button>
+                    <button class="btn furnish-btn" data-type="rug" data-val="stripe" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌈 Rainbow</button>
+                  </div>
+                </div>
+
+                <!-- 3. LAMP STYLE -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">💡 Light / Lamp:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="lamp" data-val="cute" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🐱 Cat Ears</button>
+                    <button class="btn furnish-btn" data-type="lamp" data-val="lava" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🧪 Lava Bubbles</button>
+                    <button class="btn furnish-btn" data-type="lamp" data-val="neon" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">❤️ Neon Heart</button>
+                    <button class="btn furnish-btn" data-type="lamp" data-val="classic" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">💡 Classic Gold</button>
+                  </div>
+                </div>
+
+                <!-- 4. DAZZLING LIGHTS -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">✨ Dazzling Lights:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="lights" data-val="warm" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌟 Amber Glow</button>
+                    <button class="btn furnish-btn" data-type="lights" data-val="rainbow" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌈 Twinkle Show</button>
+                    <button class="btn furnish-btn" data-type="lights" data-val="blue" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">❄️ Cool Blue</button>
+                    <button class="btn furnish-btn" data-type="lights" data-val="off" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🚫 Lights Off</button>
+                  </div>
+                </div>
+
+                <!-- 5. WALL SHELF -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">🐟 Shelf Decoration:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="shelf" data-val="salmon" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🐟 Salmon Stock</button>
+                    <button class="btn furnish-btn" data-type="shelf" data-val="trophy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🏆 Academy Trophy</button>
+                    <button class="btn furnish-btn" data-type="shelf" data-val="toy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🧶 Toy Stash</button>
+                    <button class="btn furnish-btn" data-type="shelf" data-val="plant" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌿 Cozy Greens</button>
+                  </div>
+                </div>
+
+                <!-- 6. WALLPAPER -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">🎨 Room Wallpaper:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="wallpaper" data-val="plain" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌅 Cozy Sunset</button>
+                    <button class="btn furnish-btn" data-type="wallpaper" data-val="stars" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">✨ Starry Night</button>
+                    <button class="btn furnish-btn" data-type="wallpaper" data-val="stripes" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">💈 Soft Stripes</button>
+                    <button class="btn furnish-btn" data-type="wallpaper" data-val="paws" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🐾 Paw Prints</button>
+                  </div>
+                </div>
+
+                <!-- 7. WINDOW VIEW -->
+                <div style="background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 6px 8px; display:flex; flex-direction:column; gap:4px;">
+                  <strong style="font-size:0.7rem; color:#ad1457;">🪟 Window View:</strong>
+                  <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:4px;">
+                    <button class="btn furnish-btn" data-type="window" data-val="sunny" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">☀️ Sunny Day</button>
+                    <button class="btn furnish-btn" data-type="window" data-val="starry" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌙 Starry Night</button>
+                    <button class="btn furnish-btn" data-type="window" data-val="rainy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">🌧️ Rainy Day</button>
+                    <button class="btn furnish-btn" data-type="window" data-val="snowy" style="padding:4px; font-size:0.6rem; border-radius:6px; font-weight:bold;">❄️ Snowy Day</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Bezel Phone Home button -->
+          <div style="height: 44px; background: #cfd8dc; display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(0,0,0,0.1); z-index: 9;">
+            <button id="phone-app-home-btn" style="width: 32px; height: 32px; border-radius: 50%; background: #37474f; border: 2px solid #90a4ae; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); outline: none;">🔘</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- FAMILY TREE MODAL -->
+    <div class="modal-overlay" id="family-tree-modal">
+      <div class="glass-card modal-content family-tree-modal-content">
+        <header class="modal-header">
+          <h2>🌳 Family Tree Legacy</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body family-tree-container">
+          <div class="family-tree-scroller" id="family-tree-scroller">
+            <!-- Lineage columns per generation injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHOP MODAL -->
+    <div class="modal-overlay" id="shop-modal">
+      <div class="glass-card modal-content">
+        <header class="modal-header">
+          <h2>🛒 The Cozy Pet Shop</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body shop-container">
+          <div class="shop-wallet">
+            Coins available: 🪙 <span id="shop-coins-count">0</span>
+          </div>
+          <div class="shop-grid" id="shop-items-grid">
+            <!-- Shop cards injected here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MINI-GAME MODAL -->
+    <div class="modal-overlay" id="minigame-modal">
+      <div class="glass-card modal-content minigame-content">
+        <header class="modal-header">
+          <h2>🎮 Catch the Garden Mouse</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body minigame-body">
+          <p class="minigame-desc">Click the mouse as fast as you can! Speed increases with every hit. Earn coins for your hits!</p>
+          <div class="minigame-stats">
+            <div>Hits: <strong id="minigame-hits">0</strong></div>
+            <div>Time Left: <strong id="minigame-timer">20s</strong></div>
+            <div>Earned: 🪙 <strong id="minigame-coins">0</strong></div>
+          </div>
+          <div class="minigame-playground" id="minigame-arena">
+            <button id="minigame-start-btn" class="btn primary-btn">Start Game</button>
+            <div id="minigame-mouse" class="mouse-sprite">🐭</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR MODAL -->
+    <div class="modal-overlay" id="calendar-modal">
+      <div class="glass-card modal-content calendar-modal-content">
+        <header class="modal-header">
+          <h2>📅 Cozy Cat Calendar</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body calendar-body-grid">
+          <!-- Left Panel: Grid -->
+          <div class="calendar-grid-panel">
+            <div class="calendar-month-selector-row">
+              <span id="calendar-current-date" class="calendar-date-display">Year 1 • Month of Meow-rch</span>
+            </div>
+            <div class="calendar-days-grid-header">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div class="calendar-days-grid" id="calendar-days-container">
+              <!-- 28 grid cells injected dynamically -->
+            </div>
+          </div>
+
+          <!-- Right Panel: Scheduling / Memos -->
+          <div class="calendar-scheduler-panel">
+            <div id="calendar-active-event-display" class="active-event-card">
+              <h4>🌟 Today's Event</h4>
+              <p id="today-event-desc">No events scheduled for today.</p>
+            </div>
+
+            <div class="scheduler-form-card glass-card">
+              <h4>✏️ Schedule an Event</h4>
+              <p class="desc">Click a day on the grid to set up a reminder or event bonus.</p>
+              
+              <div class="form-group">
+                <label>Selected Date</label>
+                <input type="text" id="scheduler-date-input" readonly value="Click a day...">
+              </div>
+
+              <div class="form-group">
+                <label>Event Title</label>
+                <input type="text" id="scheduler-name-input" placeholder="e.g., Vet Day, Spa Party" maxlength="15">
+              </div>
+
+              <div class="form-group">
+                <label>Event Type (Bonus Effect)</label>
+                <select id="scheduler-type-input" class="speed-select-input" style="border: 1px solid rgba(141,110,99,0.2); width:100%; border-radius:8px; padding:6px;">
+                  <option value="spa_day">🫧 Spa Day (Double Bath Affection & +10 Coins)</option>
+                  <option value="fish_feast">🐟 Fish Feast (All feeding boosts Hunger +15 extra)</option>
+                  <option value="play_party">🧸 Play Party (Double toy Affection gains)</option>
+                </select>
+              </div>
+
+              <button id="scheduler-save-btn" class="btn primary-btn" style="width:100%; margin-top:10px;">Schedule Day</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WARDROBE / DRESS-UP MODAL -->
+    <div class="modal-overlay" id="wardrobe-modal">
+      <div class="glass-card modal-content wardrobe-modal-content">
+        <header class="modal-header">
+          <h2>👗 Cat Wardrobe Studio</h2>
+          <button class="btn close-modal-btn">&times;</button>
+        </header>
+        <div class="modal-body wardrobe-body-grid">
+          <!-- Left Panel: Live Preview & Switcher -->
+          <div class="wardrobe-preview-panel">
+            <h3 id="wardrobe-cat-title">Dressing Cat</h3>
+            <div class="wardrobe-preview-box" id="wardrobe-cat-preview">
+              <!-- SVG preview of current focus cat with accessories -->
+            </div>
+            <div class="wardrobe-cat-selector" style="margin-top:12px;">
+              <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Choose Active Cat</label>
+              <select id="wardrobe-cat-select" class="speed-select-input" style="border: 1px solid rgba(141,110,99,0.25); border-radius:8px; padding:6px; width:100%; margin-top:4px;"></select>
+            </div>
+          </div>
+
+          <!-- Right Panel: Outfit Customizer -->
+          <div class="wardrobe-customizer-panel">
+            <div class="tab-header" style="display:flex; border-bottom:1px solid rgba(141,110,99,0.15); margin-bottom:12px;">
+              <button class="accessory-tab-btn active" data-category="hat" style="flex:1; background:none; border:none; padding:8px; font-weight:700; cursor:pointer; color:var(--text-muted);">🎩 Hats</button>
+              <button class="accessory-tab-btn" data-category="glasses" style="flex:1; background:none; border:none; padding:8px; font-weight:700; cursor:pointer; color:var(--text-muted);">🕶️ Glasses</button>
+              <button class="accessory-tab-btn" data-category="neckwear" style="flex:1; background:none; border:none; padding:8px; font-weight:700; cursor:pointer; color:var(--text-muted);">🎀 Neck</button>
+            </div>
+
+            <div class="accessory-maker-box">
+              <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Choose Style</label>
+              <div class="accessory-style-options" id="accessory-style-list" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:6px; margin-top:4px;">
+                <!-- Buttons dynamically loaded per category -->
+              </div>
+
+              <!-- Colors selection -->
+              <div id="accessory-color-controls" style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Primary Color</label>
+                <div class="color-palette" id="accessory-primary-colors"></div>
+
+                <label style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Accent Color</label>
+                <div class="color-palette" id="accessory-accent-colors"></div>
+              </div>
+            </div>
+
+            <div class="accessory-actions" style="margin-top: 16px; display: flex; gap: 10px;">
+              <button id="accessory-remove-btn" class="btn secondary-btn" style="flex:1; font-size:0.85rem; padding:8px;">Remove</button>
+              <button id="accessory-equip-btn" class="btn primary-btn" style="flex:1.2; font-size:0.85rem; padding:8px; background:var(--accent-pink); color:#fff; border-color:var(--accent-pink);">Equip Outfits</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

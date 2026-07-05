@@ -1,0 +1,17 @@
+# Gemini Agent temporary files
+.gemini/
+.agents/
+
+# IDE / editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS generated files
+thumbs.db
+ehthumbs.db
+Desktop.ini
