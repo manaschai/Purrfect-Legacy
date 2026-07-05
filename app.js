@@ -850,6 +850,22 @@ class GameState {
         if (!this.data.furniture.window) this.data.furniture.window = 'sunny';
       }
       
+      if (!this.data.roomFurniture) {
+        this.data.roomFurniture = {
+          'phone-room': Object.assign({}, this.data.furniture),
+          'living-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+          'back-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+          'bath-area': { rug: 'cozy', lights: 'warm', wallpaper: 'plain', window: 'sunny' }
+        };
+      } else {
+        const defaultF = { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' };
+        ['phone-room', 'living-room', 'back-room', 'bath-area'].forEach(rm => {
+          if (!this.data.roomFurniture[rm]) {
+            this.data.roomFurniture[rm] = Object.assign({}, defaultF);
+          }
+        });
+      }
+      
       if (!this.data.vacationQuest) {
         this.data.vacationQuest = {
           type: 'groom',
@@ -4459,8 +4475,20 @@ function adjustRoomFurnitureVisibility(roomName) {
 
 // --- BEDROOM CUSTOM FURNITURE DECORATION SYSTEM ---
 function updateBedroomFurnitureUI() {
-  if (!state.data || !state.data.furniture) return;
-  const f = state.data.furniture;
+  if (!state.data) return;
+  
+  if (!state.data.roomFurniture) {
+    state.data.roomFurniture = {
+      'phone-room': state.data.furniture || { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'living-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'back-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'bath-area': { rug: 'cozy', lights: 'warm', wallpaper: 'plain', window: 'sunny' }
+    };
+  }
+
+  const roomKey = (['phone-room', 'living-room', 'back-room', 'bath-area'].includes(currentRoom)) ? currentRoom : 'phone-room';
+  const f = state.data.roomFurniture[roomKey];
+  if (!f) return;
 
   // 1. Update Bed sheets, pillow, headboard fills
   const bedSheets = document.getElementById('bed-sheets');
@@ -4705,8 +4733,21 @@ function updateBedroomTVUI() {
 }
 
 function updateFurnishAppUI() {
-  if (!state.data || !state.data.furniture) return;
-  const f = state.data.furniture;
+  if (!state.data) return;
+
+  const select = document.getElementById('phone-furnish-room-select');
+  const targetRoom = select ? select.value : 'phone-room';
+  
+  if (!state.data.roomFurniture) {
+    state.data.roomFurniture = {
+      'phone-room': state.data.furniture || { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'living-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'back-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+      'bath-area': { rug: 'cozy', lights: 'warm', wallpaper: 'plain', window: 'sunny' }
+    };
+  }
+
+  const f = state.data.roomFurniture[targetRoom] || {};
 
   document.querySelectorAll('.furnish-btn').forEach(btn => {
     const type = btn.dataset.type;
@@ -4717,24 +4758,65 @@ function updateFurnishAppUI() {
     btn.style.color = active ? '#fff' : '#2c3e50';
     btn.style.borderColor = active ? '#ad1457' : '#dadce0';
   });
+
+  // Toggle panel displays depending on room selection
+  document.querySelectorAll('.furnish-btn').forEach(btn => {
+    const parentCard = btn.closest('div[style*="border: 1.5px solid"]');
+    if (!parentCard) return;
+    
+    const text = parentCard.textContent;
+    if (text.includes('Bed Style:')) {
+      parentCard.style.display = (targetRoom === 'phone-room') ? 'flex' : 'none';
+    } else if (text.includes('Shelf Decoration:')) {
+      parentCard.style.display = (targetRoom !== 'bath-area') ? 'flex' : 'none';
+    } else if (text.includes('Light / Lamp:')) {
+      parentCard.style.display = (targetRoom !== 'bath-area') ? 'flex' : 'none';
+    }
+  });
 }
+
+// Dropdown Change listener to automatically switch room
+document.getElementById('phone-furnish-room-select').addEventListener('change', (e) => {
+  const selectedRoom = e.target.value;
+  switchRoom(selectedRoom);
+  updateFurnishAppUI();
+});
 
 // Bind Phone Furnish buttons click handler
 document.querySelectorAll('.furnish-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const type = btn.dataset.type;
     const val = btn.dataset.val;
+    
+    const select = document.getElementById('phone-furnish-room-select');
+    const targetRoom = select ? select.value : 'phone-room';
 
-    if (!state.data.furniture) {
-      state.data.furniture = { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' };
+    if (!state.data.roomFurniture) {
+      state.data.roomFurniture = {
+        'phone-room': state.data.furniture || { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+        'living-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+        'back-room': { rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+        'bath-area': { rug: 'cozy', lights: 'warm', wallpaper: 'plain', window: 'sunny' }
+      };
     }
-    state.data.furniture[type] = val;
+
+    state.data.roomFurniture[targetRoom][type] = val;
+    if (targetRoom === 'phone-room') {
+      state.data.furniture[type] = val;
+    }
     state.saveProfiles();
 
     audio.playPhoneTone(523, 659, 0.1);
     updateFurnishAppUI();
     updateBedroomFurnitureUI();
-    showToast(`Bedroom decoration updated: ${type} set to ${val}! 🛋️✨`);
+    
+    const roomNameMap = {
+      'phone-room': 'Bedroom 🛌',
+      'living-room': 'Living Room 🛋️',
+      'bath-area': 'Bath Area 🛁',
+      'back-room': 'Back Room 🧸'
+    };
+    showToast(`${roomNameMap[targetRoom]} decoration updated: ${type} set to ${val}! ✨`);
   });
 });
 
@@ -4744,7 +4826,15 @@ function openBedroomDecorator() {
   modal.classList.add('active');
   audio.playPhoneTone(350, 440, 0.12);
   initPhoneKids();
+  
+  // Sync selected dropdown item with current active room
+  const select = document.getElementById('phone-furnish-room-select');
+  if (select && ['phone-room', 'living-room', 'bath-area', 'back-room'].includes(currentRoom)) {
+    select.value = currentRoom;
+  }
+  
   switchPhoneView('furnish');
+  updateFurnishAppUI();
 }
 
 // Bind Bedroom interactive elements to open Decorator directly
