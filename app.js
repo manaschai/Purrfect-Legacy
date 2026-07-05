@@ -3671,6 +3671,8 @@ function switchPhoneView(viewId) {
     initCollarMakerUI();
   } else if (viewId === 'videocall') {
     // Handled dynamically
+  } else if (viewId === 'incomingcall' || viewId === 'activecall') {
+    // Handled dynamically
   }
 }
 
@@ -5597,6 +5599,166 @@ document.getElementById('collar-charm-input').addEventListener('input', drawColl
 document.getElementById('collar-craft-submit-btn').addEventListener('click', craftCustomCollar);
 
 
+// --- 📞 RANDOM INCOMING CALL SYSTEM ---
+
+const RANDOM_CALLERS = [
+  { name: "🐟 Fish Merchant", avatar: "🐟", dialogue: "Ahoy! I got a surplus of fresh salmon today! I have transferred 15 Cat Coins to your account as a friendly gift! Have a purrfect day!", rewardCoins: 15 },
+  { name: "🎓 Academy Dean", avatar: "🎓", dialogue: "Hello! Just calling to congratulate you on your cat's study progress. They are show-stopping students! Keep up the enrollment!", rewardCoins: 0 },
+  { name: "🐱 Luna's Grandma", avatar: "👵", dialogue: "Hello dear! Luna's grandmother here. I knitted a tiny mouse toy for the kittens! Make sure they sleep well and stay warm. Sending you 10 Cat Coins!", rewardCoins: 10 },
+  { name: "👑 Wealthy Sponsor", avatar: "👑", dialogue: "Greetings! I sponsor modern cat homes worldwide. Your cat care is stellar! Here is a micro-grant of 25 Cat Coins to decorate your rooms!", rewardCoins: 25 },
+  { name: "🐈 Stray Cat Bob", avatar: "🐱", dialogue: "Mew... I am a local stray cat looking for friends. Your home looks so beautiful and welcoming! *purrs softly*", rewardCoins: 0 },
+  { name: "🛸 Alien Cat", avatar: "🛸", dialogue: "Meow-zorp! Hello human of Earth. We are monitoring your cat's cuteness levels. They have exceeded the galaxy threshold! Zorp!", rewardCoins: 0 }
+];
+
+let activeIncomingCaller = null;
+let incomingRingInterval = null;
+let activeCallTimerInterval = null;
+let activeCallSeconds = 0;
+
+function startPhoneRingingSound() {
+  stopPhoneRingingSound();
+  if (audio.muted) return;
+  audio.playPhoneRing();
+  incomingRingInterval = setInterval(() => {
+    if (!audio.muted) audio.playPhoneRing();
+  }, 2500);
+}
+
+function stopPhoneRingingSound() {
+  if (incomingRingInterval) {
+    clearInterval(incomingRingInterval);
+    incomingRingInterval = null;
+  }
+}
+
+function triggerRandomIncomingCall() {
+  if (minigameActive) return;
+  
+  const caller = RANDOM_CALLERS[Math.floor(Math.random() * RANDOM_CALLERS.length)];
+  activeIncomingCaller = caller;
+  
+  startPhoneRingingSound();
+  showIncomingCallNotification(caller);
+}
+
+function showIncomingCallNotification(caller) {
+  const existing = document.getElementById('phone-ringing-banner');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.id = 'phone-ringing-banner';
+  banner.style.cssText = "position:absolute; top:12px; left:50%; transform:translateX(-50%); background:#512da8; color:#fff; padding:10px 16px; border-radius:12px; border:2px solid #80deea; box-shadow:0 6px 15px rgba(0,0,0,0.3); font-size:0.75rem; font-weight:800; cursor:pointer; z-index:9999; display:flex; align-items:center; gap:8px;";
+  banner.innerHTML = `<span>🔔 Incoming: ${caller.avatar} ${caller.name}</span> <span style="font-size:0.6rem; background:#fff; color:#512da8; padding:2px 8px; border-radius:8px; font-weight:bold;">ANSWER</span>`;
+  
+  banner.onclick = () => {
+    banner.remove();
+    const modal = document.getElementById('phone-modal');
+    if (modal) modal.classList.add('active');
+    initPhoneKids();
+    showIncomingCallScreen(caller);
+  };
+  
+  const container = document.getElementById('play-space-container');
+  if (container) container.appendChild(banner);
+  
+  setTimeout(() => {
+    const activeBanner = document.getElementById('phone-ringing-banner');
+    if (activeBanner) {
+      activeBanner.remove();
+      declineIncomingCall();
+    }
+  }, 15000);
+}
+
+function showIncomingCallScreen(caller) {
+  const nameLabel = document.getElementById('phone-incomingcall-caller-name');
+  const avatarLabel = document.getElementById('phone-incomingcall-avatar');
+  
+  if (nameLabel) nameLabel.textContent = caller.name;
+  if (avatarLabel) avatarLabel.textContent = caller.avatar;
+  
+  switchPhoneView('incomingcall');
+}
+
+function acceptIncomingCall() {
+  stopPhoneRingingSound();
+  
+  const banner = document.getElementById('phone-ringing-banner');
+  if (banner) banner.remove();
+  
+  const caller = activeIncomingCaller;
+  if (!caller) return;
+
+  const nameLabel = document.getElementById('phone-activecall-caller-name');
+  const avatarLabel = document.getElementById('phone-activecall-avatar');
+  const subtitlesEl = document.getElementById('phone-activecall-subtitles');
+  
+  if (nameLabel) nameLabel.textContent = caller.name;
+  if (avatarLabel) avatarLabel.textContent = caller.avatar;
+  if (subtitlesEl) subtitlesEl.textContent = caller.dialogue;
+
+  if (caller.rewardCoins > 0 && state.data) {
+    state.data.coins += caller.rewardCoins;
+    state.saveProfiles();
+    audio.playPhoneTone(523, 659, 0.1);
+    showToast(`Received ${caller.rewardCoins} Cat Coins! 🪙`);
+  }
+
+  startActiveCallTimer();
+  switchPhoneView('activecall');
+}
+
+function declineIncomingCall() {
+  stopPhoneRingingSound();
+  
+  const banner = document.getElementById('phone-ringing-banner');
+  if (banner) banner.remove();
+  
+  activeIncomingCaller = null;
+  audio.playPhoneTone(440, 480, 0.15);
+  
+  switchPhoneView('home');
+}
+
+function hangUpActiveCall() {
+  stopActiveCallTimer();
+  activeIncomingCaller = null;
+  audio.playPhoneTone(440, 480, 0.15);
+  
+  switchPhoneView('home');
+}
+
+function startActiveCallTimer() {
+  stopActiveCallTimer();
+  activeCallSeconds = 0;
+  
+  const timerEl = document.getElementById('phone-activecall-timer');
+  if (timerEl) timerEl.textContent = '00:00';
+  
+  activeCallTimerInterval = setInterval(() => {
+    activeCallSeconds++;
+    const mins = Math.floor(activeCallSeconds / 60).toString().padStart(2, '0');
+    const secs = (activeCallSeconds % 60).toString().padStart(2, '0');
+    if (timerEl) timerEl.textContent = `${mins}:${secs}`;
+  }, 1000);
+}
+
+function stopActiveCallTimer() {
+  if (activeCallTimerInterval) {
+    clearInterval(activeCallTimerInterval);
+    activeCallTimerInterval = null;
+  }
+}
+
+// Bind incoming/active call action listeners
+document.getElementById('phone-incomingcall-accept-btn').addEventListener('click', acceptIncomingCall);
+document.getElementById('phone-incomingcall-decline-btn').addEventListener('click', declineIncomingCall);
+document.getElementById('phone-activecall-hangup-btn').addEventListener('click', hangUpActiveCall);
+
+// Trigger check loop
+setInterval(triggerRandomIncomingCall, 100000);
+
+
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -5629,6 +5791,7 @@ window.onload = () => {
       Views.switch('breeding-screen');
     } else {
       Views.switch('game-screen');
+      setTimeout(triggerRandomIncomingCall, 25000);
     }
   } else {
     Views.switch('profile-screen');
