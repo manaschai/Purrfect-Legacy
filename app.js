@@ -2198,6 +2198,7 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
   }
 
   const activeEvent = getActiveEventToday();
+  const isVacationToday = activeEvent && activeEvent.type === 'vacation';
 
   switch(action) {
     case 'feed':
