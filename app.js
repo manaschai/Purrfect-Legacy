@@ -3712,7 +3712,26 @@ document.querySelectorAll('.phone-app-btn').forEach(btn => {
 
 document.getElementById('phone-app-home-btn').addEventListener('click', () => {
   audio.playPhoneTone(440, 480, 0.08);
-  switchPhoneView('home');
+  const homeView = document.getElementById('phone-view-home');
+  if (homeView && homeView.style.display === 'flex') {
+    document.getElementById('phone-modal').classList.remove('active');
+    if (typeof cattubeVideoInterval !== 'undefined' && cattubeVideoInterval) {
+      clearInterval(cattubeVideoInterval);
+      cattubeVideoInterval = null;
+    }
+    if (typeof meowtifyAudioInterval !== 'undefined' && meowtifyAudioInterval) {
+      clearInterval(meowtifyAudioInterval);
+      meowtifyAudioInterval = null;
+      meowtifyActiveTrack = null;
+    }
+    if (typeof securityCamTickInterval !== 'undefined' && securityCamTickInterval) {
+      clearInterval(securityCamTickInterval);
+      securityCamTickInterval = null;
+    }
+    stopPhoneRingingSound();
+  } else {
+    switchPhoneView('home');
+  }
 });
 
 // --- MESSAGES CHAT APP LOGIC ---
