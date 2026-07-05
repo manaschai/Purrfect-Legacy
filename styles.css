@@ -611,7 +611,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: 100%;
+  min-height: 100%;
+  height: auto;
 }
 
 .game-header {
@@ -693,6 +694,14 @@ body {
   gap: 8px;
   border-bottom: 2px solid rgba(141, 110, 99, 0.1);
   padding-bottom: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+
+.room-tabs::-webkit-scrollbar {
+  display: none; /* Hide scrollbar for Chrome/Safari/Opera */
 }
 
 .room-tab {
@@ -707,6 +716,7 @@ body {
   border-radius: 10px 10px 0 0;
   position: relative;
   transition: var(--transition-smooth);
+  flex-shrink: 0;
 }
 
 .room-tab.active {
@@ -2166,6 +2176,13 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
     text-align: center;
     font-size: 0.75rem;
     padding: 4px;
+  }
+
+  .header-actions #audio-toggle-btn {
+    width: 100%;
+    height: auto;
+    min-height: 34px;
+    border-radius: 12px;
   }
 
   /* Horizontally scrollable playroom to avoid overlaps */
