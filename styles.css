@@ -2090,3 +2090,142 @@ body {
   0% { transform: translate(-50%, 0); }
   100% { transform: translate(-50%, -4px); }
 }
+
+/* ==========================================================================
+   MOBILE SCREEN RESPONSIVENESS OVERRIDES
+   ========================================================================== */
+
+/* Disable double-tap zoom delay & enable fast response */
+button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
+  touch-action: manipulation;
+}
+
+/* Enable touch swipe for room navigation */
+.room-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid rgba(141, 110, 99, 0.1);
+  padding-bottom: 2px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+.room-tabs::-webkit-scrollbar {
+  display: none; /* Safari/Chrome */
+}
+.room-tab {
+  flex-shrink: 0;
+}
+
+/* Mobile responsive queries (Phones & Tablets) */
+@media (max-width: 768px) {
+  #app {
+    padding: 10px;
+  }
+
+  /* Stack header controls */
+  .game-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 8px;
+  }
+
+  /* 3-column stats grid */
+  .game-stats-header {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+
+  .header-stat-item {
+    font-size: 0.82rem;
+    padding: 6px 4px;
+    justify-content: center;
+  }
+
+  /* Grid layout for action buttons */
+  .header-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    font-size: 0.75rem;
+    padding: 8px 2px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-actions .speed-control-badge {
+    grid-column: span 3;
+    text-align: center;
+    font-size: 0.75rem;
+    padding: 4px;
+  }
+
+  /* Horizontally scrollable playroom to avoid overlaps */
+  .play-space {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .room-background-scene, #room-interactive-items {
+    width: 580px; /* Fixed viewport width for layout spacing */
+    height: 100%;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .room-background-scene svg {
+    width: 580px;
+    height: 100%;
+  }
+
+  /* Breeding screen grid stack */
+  .lab-main-setup {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .breeding-station {
+    order: 3;
+    padding: 10px 0;
+  }
+
+  /* Modals adjustment */
+  .modal-content {
+    width: 95%;
+    max-height: 85%;
+    padding: 16px;
+  }
+}
+
+/* Virtual Smartphone Auto Scaling on short screens */
+@media (max-height: 700px) {
+  #phone-modal .phone-modal-content {
+    transform: scale(0.85);
+    transform-origin: center center;
+  }
+}
+
+@media (max-height: 600px) {
+  #phone-modal .phone-modal-content {
+    transform: scale(0.72);
+    transform-origin: center center;
+  }
+}
+
+@media (max-width: 400px) {
+  .header-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .header-actions .btn:nth-child(even) {
+    grid-column: span 1;
+  }
+}
