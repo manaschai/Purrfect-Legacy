@@ -8,7 +8,82 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=1.0.2">
+  <link rel="stylesheet" href="styles.css?v=1.0.3">
+  <style>
+    /* Bypass aggressive mobile CSS caching using inline responsive overrides */
+    @media (max-width: 768px) {
+      #app {
+        padding: 10px !important;
+      }
+      .game-container {
+        min-height: 100% !important;
+        height: auto !important;
+      }
+      .game-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 12px !important;
+        gap: 8px !important;
+      }
+      .game-stats-header {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .header-stat-item {
+        font-size: 0.82rem !important;
+        padding: 6px 4px !important;
+        justify-content: center !important;
+      }
+      .header-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .header-actions .btn {
+        font-size: 0.8rem !important;
+        padding: 10px 4px !important;
+        width: 100% !important;
+        justify-content: center !important;
+      }
+      .header-actions .speed-control-badge {
+        grid-column: span 2 !important;
+        text-align: center !important;
+        font-size: 0.8rem !important;
+        padding: 6px !important;
+        width: 100% !important;
+        display: block !important;
+      }
+      .header-actions #audio-toggle-btn {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 38px !important;
+        border-radius: 12px !important;
+      }
+      .play-space {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .room-background-scene, #room-interactive-items {
+        width: 580px !important;
+        height: 100% !important;
+        position: relative !important;
+        flex-shrink: 0 !important;
+      }
+      .room-background-scene svg {
+        width: 580px !important;
+        height: 100% !important;
+      }
+      .modal-content {
+        width: 95% !important;
+        max-height: 85% !important;
+        padding: 16px !important;
+      }
+    }
+  </style>
 </head>
 <body>
 
