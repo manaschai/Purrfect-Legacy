@@ -2160,13 +2160,13 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
   .header-actions {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: 8px;
     width: 100%;
   }
 
   .header-actions .btn {
-    font-size: 0.75rem;
-    padding: 8px 2px;
+    font-size: 0.8rem;
+    padding: 10px 4px;
     width: 100%;
     justify-content: center;
   }
@@ -2174,14 +2174,14 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
   .header-actions .speed-control-badge {
     grid-column: span 3;
     text-align: center;
-    font-size: 0.75rem;
-    padding: 4px;
+    font-size: 0.8rem;
+    padding: 6px;
   }
 
   .header-actions #audio-toggle-btn {
     width: 100%;
     height: auto;
-    min-height: 34px;
+    min-height: 38px;
     border-radius: 12px;
   }
 
@@ -2238,11 +2238,11 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 600px) {
   .header-actions {
     grid-template-columns: repeat(2, 1fr);
   }
-  .header-actions .btn:nth-child(even) {
-    grid-column: span 1;
+  .header-actions .speed-control-badge {
+    grid-column: span 2;
   }
 }
