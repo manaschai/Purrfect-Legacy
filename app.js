@@ -3522,35 +3522,36 @@ document.getElementById('clean-room-btn').addEventListener('click', () => {
 });
 
 // --- SMARTPHONE APP CONTROLLERS ---
-let phoneKids = [];
-let phoneChatHistories = {
-  vet: [
-    { sender: 'them', text: 'Hello! I am Dr. Whisker (Vet). Ask me medical advice or tips.' }
-  ],
-  kid_1: [
-    { sender: 'them', text: 'Hey! Just saying hello from my new scratching post!' }
-  ],
-  kid_2: [
-    { sender: 'them', text: 'Hey parent! How is the new generation doing?' }
-  ]
-};
+let phoneChatHistories = {};
+
+function populateChatContacts() {
+  const select = document.getElementById('phone-chat-contact-select');
+  if (!select || !state.data || !state.data.activeCats) return;
+  
+  const curVal = select.value;
+  select.innerHTML = '';
+  
+  state.data.activeCats.forEach((cat, index) => {
+    const key = `cat_${index}`;
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = `🐱 ${cat.name}`;
+    select.appendChild(opt);
+    
+    if (!phoneChatHistories[key]) {
+      phoneChatHistories[key] = [
+        { sender: 'them', text: `${cat.name}: "Purr... Hello hooman! I am so happy to be your cat! Send me a message! 🐾"` }
+      ];
+    }
+  });
+
+  if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+    select.value = curVal;
+  }
+}
 
 function initPhoneKids() {
-  if (phoneKids.length > 0) return;
-  const names = ['Mochi', 'Pip', 'Cookie', 'Cupcake', 'Oreo', 'Waffles', 'Tater Tot', 'Peanut'];
-  const k1 = names[Math.floor(Math.random() * names.length)];
-  let k2 = names[Math.floor(Math.random() * names.length)];
-  while (k2 === k1) {
-    k2 = names[Math.floor(Math.random() * names.length)];
-  }
-  phoneKids = [k1, k2];
-  
-  const opt1 = document.getElementById('phone-contact-kid1');
-  const opt2 = document.getElementById('phone-contact-kid2');
-  if (opt1) opt1.textContent = `🐱 Kid: ${k1}`;
-  if (opt2) opt2.textContent = `🐱 Kid: ${k2}`;
-  if (opt1) opt1.value = 'kid_1';
-  if (opt2) opt2.value = 'kid_2';
+  populateChatContacts();
 }
 
 function switchPhoneView(viewId) {
@@ -3581,6 +3582,7 @@ function switchPhoneView(viewId) {
   if (viewId === 'meowzon') {
     document.getElementById('phone-meowzon-coins').textContent = state.data.coins;
   } else if (viewId === 'chat') {
+    populateChatContacts();
     renderPhoneChatHistory();
   } else if (viewId === 'cathrome') {
     loadBrowserUrl('www.meowgle.com');
@@ -3698,29 +3700,39 @@ function sendPhoneChatMessage() {
     let reply = '';
     const norm = text.toLowerCase();
     
-    if (contact === 'vet') {
-      if (norm.includes('dirty') || norm.includes('clean') || norm.includes('bath') || norm.includes('wash')) {
-        reply = 'Dr. Whisker: "Keep your cats clean! Give them a warm soapy bath in the Bath Area to restore 100% cleanliness."';
-      } else if (norm.includes('allergy') || norm.includes('dander') || norm.includes('sneeze') || norm.includes('dust')) {
-        reply = 'Dr. Whisker: "To prevent allergies, close the Study Room door (cats out) and use the Vacuum Room button to clear dander!"';
-      } else if (norm.includes('tired') || norm.includes('sleep') || norm.includes('energy')) {
-        reply = 'Dr. Whisker: "Make sure cats rest in The Back Room when their energy gets low. Sleeping on cushions restores energy!"';
-      } else if (norm.includes('study') || norm.includes('class') || norm.includes('school') || norm.includes('degree')) {
-        reply = 'Dr. Whisker: "Enrolling your cats in courses at the School Academy grants permanent degree buffs and speeds up their actions!"';
-      } else {
-        reply = 'Dr. Whisker: "Be sure to feed and play with your kittens. Regular grooming also keeps shedding dander low!"';
-      }
-    } else {
-      const kidName = contact === 'kid_1' ? phoneKids[0] : phoneKids[1];
-      const kidReplies = [
-        `Hey parent! I chased a laser pointer today, it was epic!`,
-        `I miss your home-cooked fish treats!`,
-        `Just finished studying Nap-ology at school. I got an A!`,
-        `I found a really cozy cardboard box. If I fits, I sits!`,
-        `Can you send some Cat Coins? Just kidding, love you!`,
-        `I took a 6-hour nap today. Hard work being a cat.`
+    const catIdx = parseInt(contact.replace('cat_', ''));
+    const cat = (state.data && state.data.activeCats) ? state.data.activeCats[catIdx] : null;
+    
+    if (cat) {
+      const SUPPORTIVE_CAT_REPLIES = [
+        "Mew! I love you so much, hooman! You are doing an amazing job taking care of us! ❤️",
+        "Purr... I feel so safe and happy when you are around. Thank you for being the best owner ever!",
+        "Don't stress, hooman! You are doing great. Take a deep breath and give me a pet later! 🥰",
+        "Meow! I was just thinking about how lucky I am to have you as my companion. Keep going! 🌟",
+        "Purrr... *headbutts your hand* You've got this today! I believe in you!",
+        "Mew! Just checking in to make sure you are drinking water and taking care of yourself too! 🐾",
+        "Meow! Your kindness makes my heart warm. Thank you for the delicious food and playtime! 🐟",
+        "Purr... *curls up next to you virtually* Whenever you feel tired, I am right here to support you! 💤",
+        "Mew! Remember that you are wonderful and doing your best. I am proud to be your kitten! 🎀",
+        "Meow! Sending you a big virtual headbutt and lots of purrs! You're making this house a true home! 🏡",
+        "Purrr... Did you know you're my favorite human in the whole wide world? Mew! 💖",
+        "Meow! You bring so much joy to my life. I hope I bring you joy too! 🎈"
       ];
-      reply = `${kidName}: "${kidReplies[Math.floor(Math.random() * kidReplies.length)]}"`;
+      
+      let comment = '';
+      if (norm.includes('love')) {
+        comment = "Mew! I love you more than tuna treats! *purrs loudly* ❤️";
+      } else if (norm.includes('tired') || norm.includes('sad') || norm.includes('exhausted') || norm.includes('sick')) {
+        comment = "Oh no, hooman! *nudges you* Rest up! You are working so hard and doing a wonderful job. I'll watch the play space! 💤";
+      } else if (norm.includes('feed') || norm.includes('fish') || norm.includes('food')) {
+        comment = "Meow! Feed me delicious fishies anytime, but most of all I just love spending time with you! 🐟";
+      } else {
+        comment = SUPPORTIVE_CAT_REPLIES[Math.floor(Math.random() * SUPPORTIVE_CAT_REPLIES.length)];
+      }
+      
+      reply = `${cat.name}: "${comment}"`;
+    } else {
+      reply = `System: "Cat has left the house."`;
     }
     
     phoneChatHistories[contact].push({ sender: 'them', text: reply });
