@@ -3627,6 +3627,8 @@ function switchPhoneView(viewId) {
     initPhoneMapsUI();
   } else if (viewId === 'furnish') {
     updateFurnishAppUI();
+  } else if (viewId === 'videocall') {
+    // Handled dynamically
   }
 }
 
@@ -5059,6 +5061,162 @@ function scheduleVacationDay() {
 // Bind Button Listeners
 document.getElementById('book-vacation-coins-btn').addEventListener('click', bookVacationWithCoins);
 document.getElementById('schedule-vacation-btn').addEventListener('click', scheduleVacationDay);
+
+// --- 📹 SMARTPHONE VIDEO CALL SYSTEM (SILENT TEXT SUBTITLES) ---
+
+const VIDEO_CALL_CAT_SUBTITLES = [
+  "*blinks slowly* (Subtitles: \"Hey hooman! Look at me, I am on the video screen! You look so lovely today!\")",
+  "*purrs silently* (Subtitles: \"I can see you! Sending you a big warm virtual headbutt to brighten your day!\")",
+  "*wags ears* (Subtitles: \"Mew! I love seeing your face. You are doing a wonderful job taking care of us, keep going!\")",
+  "*blinks slowly* (Subtitles: \"I am so happy and cozy here. Remember to take a break and rest just like I do!\")",
+  "*yawns silently* (Subtitles: \"Mew... You make my heart feel so happy. Thanks for being the best owner!\")",
+  "*gives a soft meow* (Subtitles: \"Hooman! You've got this today! I am sending all my positive kitty energy your way!\")"
+];
+
+const VIDEO_CALL_VET_SUBTITLES = [
+  "(Subtitles: \"Hello! Dr. Whisker here. Just checking in to make sure all kittens are healthy and happy!\")",
+  "(Subtitles: \"Remember to scoop the litter boxes and wash the cats in the Bath Area regularly!\")",
+  "(Subtitles: \"To prevent sneezing and allergies, keep the Study room door closed and vacuum often!\")",
+  "(Subtitles: \"Cat Academy courses are great! They boost your cat's growth and stats permanently!\")",
+  "(Subtitles: \"Keep up the great work! Your cats are lucky to have such a dedicated caretaker!\")"
+];
+
+let activeVideoCallSubtitles = [];
+let activeVideoCallIndex = 0;
+
+function getCatFaceSVG(cat) {
+  const headColor = cat.color || '#ffb74d';
+  const earColor = '#ffa726';
+  const innerEarColor = '#ff8a80';
+  
+  return `
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      <style>
+        @keyframes headBob {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(2px); }
+        }
+        @keyframes blink {
+          0%, 90%, 100% { transform: scaleY(1); }
+          5% { transform: scaleY(0.1); }
+        }
+        .head-g { animation: headBob 2s infinite alternate ease-in-out; transform-origin: center bottom; }
+        .eye-g { animation: blink 4s infinite; transform-origin: center center; }
+      </style>
+      <polygon points="15,40 10,10 40,30" fill="${earColor}" />
+      <polygon points="18,38 14,15 37,29" fill="${innerEarColor}" />
+      <polygon points="85,40 90,10 60,30" fill="${earColor}" />
+      <polygon points="82,38 86,15 63,29" fill="${innerEarColor}" />
+      <g class="head-g">
+        <circle cx="50" cy="55" r="35" fill="${headColor}" />
+        <ellipse class="eye-g" cx="38" cy="50" rx="4" ry="6" fill="#000" />
+        <ellipse class="eye-g" cx="62" cy="50" rx="4" ry="6" fill="#000" />
+        <circle class="eye-g" cx="37" cy="48" r="1.5" fill="#fff" />
+        <circle class="eye-g" cx="61" cy="48" r="1.5" fill="#fff" />
+        <polygon points="50,58 47,55 53,55" fill="#ff8a80" />
+        <path d="M 47,62 Q 50,65 50,62 Q 50,65 53,62" stroke="#000" stroke-width="1.5" fill="none" />
+        <circle cx="30" cy="58" r="3" fill="#ff8a80" opacity="0.5" />
+        <circle cx="70" cy="58" r="3" fill="#ff8a80" opacity="0.5" />
+        <line x1="25" y1="58" x2="5" y2="56" stroke="#555" stroke-width="1" />
+        <line x1="25" y1="61" x2="5" y2="62" stroke="#555" stroke-width="1" />
+        <line x1="75" y1="58" x2="95" y2="56" stroke="#555" stroke-width="1" />
+        <line x1="75" y1="61" x2="95" y2="62" stroke="#555" stroke-width="1" />
+      </g>
+    </svg>
+  `;
+}
+
+function getVetFaceSVG() {
+  return `
+    <svg viewBox="0 0 100 100" width="100%" height="100%">
+      <style>
+        @keyframes headBob {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(2px); }
+        }
+        @keyframes blink {
+          0%, 90%, 100% { transform: scaleY(1); }
+          5% { transform: scaleY(0.1); }
+        }
+        .head-g { animation: headBob 2.5s infinite alternate ease-in-out; transform-origin: center bottom; }
+        .eye-g { animation: blink 3.5s infinite; transform-origin: center center; }
+      </style>
+      <polygon points="15,40 10,10 40,30" fill="#78909c" />
+      <polygon points="18,38 14,15 37,29" fill="#ff8a80" />
+      <polygon points="85,40 90,10 60,30" fill="#78909c" />
+      <polygon points="82,38 86,15 63,29" fill="#ff8a80" />
+      <g class="head-g">
+        <circle cx="50" cy="55" r="35" fill="#eceff1" />
+        <circle cx="36" cy="48" r="8" stroke="#37474f" stroke-width="2.5" fill="none" />
+        <circle cx="64" cy="48" r="8" stroke="#37474f" stroke-width="2.5" fill="none" />
+        <line x1="44" y1="48" x2="56" y2="48" stroke="#37474f" stroke-width="2.5" />
+        <ellipse class="eye-g" cx="36" cy="48" rx="3" ry="5" fill="#000" />
+        <ellipse class="eye-g" cx="64" cy="48" rx="3" ry="5" fill="#000" />
+        <path d="M 30,85 L 50,70 L 70,85" fill="#ffffff" stroke="#37474f" stroke-width="1.5" />
+        <path d="M 45,78 L 45,90 M 55,78 L 55,90" stroke="#78909c" stroke-width="2" />
+        <circle cx="50" cy="85" r="5" fill="#90a4ae" />
+        <polygon points="50,58 47,55 53,55" fill="#ff8a80" />
+        <path d="M 47,62 Q 50,65 50,62 Q 50,65 53,62" stroke="#000" stroke-width="1.5" fill="none" />
+        <path d="M 35,62 Q 25,65 15,62 M 35,66 Q 23,71 13,70" stroke="#90a4ae" stroke-width="1.5" fill="none" />
+        <path d="M 65,62 Q 75,65 85,62 M 65,66 Q 77,71 87,70" stroke="#90a4ae" stroke-width="1.5" fill="none" />
+      </g>
+    </svg>
+  `;
+}
+
+function startPhoneVideoCall() {
+  const contact = document.getElementById('phone-chat-contact-select').value;
+  audio.playPhoneTone(697, 1209, 0.2); // Dialing chirp
+  
+  const nameLabel = document.getElementById('phone-videocall-contact-name');
+  const faceBox = document.getElementById('phone-videocall-face-box');
+  const subtitlesEl = document.getElementById('phone-videocall-subtitles');
+  
+  if (contact === 'vet') {
+    if (nameLabel) nameLabel.textContent = '🩺 Dr. Whisker (Vet)';
+    if (faceBox) faceBox.innerHTML = getVetFaceSVG();
+    activeVideoCallSubtitles = VIDEO_CALL_VET_SUBTITLES;
+  } else {
+    const cat = state.data.activeCats.find(c => c.id === contact);
+    if (cat) {
+      if (nameLabel) nameLabel.textContent = `🐱 ${cat.name}`;
+      if (faceBox) faceBox.innerHTML = getCatFaceSVG(cat);
+      activeVideoCallSubtitles = VIDEO_CALL_CAT_SUBTITLES;
+    } else {
+      showToast("Cannot connect video feed. Cat not available!");
+      return;
+    }
+  }
+
+  activeVideoCallIndex = 0;
+  if (subtitlesEl) {
+    subtitlesEl.textContent = activeVideoCallSubtitles[0];
+  }
+  
+  switchPhoneView('videocall');
+}
+
+function nextPhoneVideoCallSubtitle() {
+  if (activeVideoCallSubtitles.length === 0) return;
+  activeVideoCallIndex = (activeVideoCallIndex + 1) % activeVideoCallSubtitles.length;
+  
+  const subtitlesEl = document.getElementById('phone-videocall-subtitles');
+  if (subtitlesEl) {
+    subtitlesEl.textContent = activeVideoCallSubtitles[activeVideoCallIndex];
+  }
+  audio.playPhoneTone(852, 1209, 0.05); // click beep
+}
+
+function hangUpPhoneVideoCall() {
+  audio.playPhoneTone(440, 480, 0.15); // Disconnect chime
+  switchPhoneView('chat');
+}
+
+// Bind listeners
+document.getElementById('phone-chat-videocall-btn').addEventListener('click', startPhoneVideoCall);
+document.getElementById('phone-videocall-next-btn').addEventListener('click', nextPhoneVideoCallSubtitle);
+document.getElementById('phone-videocall-hangup-btn').addEventListener('click', hangUpPhoneVideoCall);
+
 
 // --- GENERAL UI MODAL CLOSE EVENTS ---
 document.querySelectorAll('.close-modal-btn').forEach(btn => {
