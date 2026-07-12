@@ -214,35 +214,97 @@ class AudioEngine {
     this.init();
     if (this.ctx.state === 'suspended') this.ctx.resume();
 
+    const ringStyle = (state.data && state.data.phoneRingtone) ? state.data.phoneRingtone : 'classic';
     const now = this.ctx.currentTime;
     
-    // Classic US Ringback: mixed 440Hz + 480Hz pulsing
-    const playRing = (delay) => {
-      const t = now + delay;
-      const osc1 = this.ctx.createOscillator();
-      const osc2 = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-
-      osc1.frequency.setValueAtTime(440, t);
-      osc2.frequency.setValueAtTime(480, t);
-      
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.06, t + 0.05);
-      gain.gain.setValueAtTime(0.06, t + 0.35);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc1.start(t);
-      osc2.start(t);
-      osc1.stop(t + 0.45);
-      osc2.stop(t + 0.45);
-    };
-
-    playRing(0);
-    playRing(0.65);
+    if (ringStyle === 'classic') {
+      const playRing = (delay) => {
+        const t = now + delay;
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc1.frequency.setValueAtTime(440, t);
+        osc2.frequency.setValueAtTime(480, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.06, t + 0.05);
+        gain.gain.setValueAtTime(0.06, t + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc1.start(t);
+        osc2.start(t);
+        osc1.stop(t + 0.45);
+        osc2.stop(t + 0.45);
+      };
+      playRing(0);
+      playRing(0.65);
+    } else if (ringStyle === 'meow') {
+      const playChirp = (freq, delay, dur) => {
+        const t = now + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.2, t + dur);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.08, t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + dur);
+      };
+      playChirp(523, 0, 0.15);
+      playChirp(659, 0.2, 0.15);
+      playChirp(784, 0.4, 0.25);
+    } else if (ringStyle === 'retro') {
+      const playBeep = (freq, delay, dur) => {
+        const t = now + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.05, t + 0.02);
+        gain.gain.setValueAtTime(0.05, t + dur - 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + dur);
+      };
+      playBeep(880, 0, 0.08);
+      playBeep(1200, 0.09, 0.08);
+      playBeep(880, 0.18, 0.08);
+      playBeep(1200, 0.27, 0.18);
+    } else if (ringStyle === 'disco') {
+      const playFunk = (freq, delay, dur) => {
+        const t = now + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.04, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 600;
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.start(t);
+        osc.stop(t + dur);
+      };
+      playFunk(261.63, 0, 0.12);
+      playFunk(392.00, 0.15, 0.12);
+      playFunk(349.23, 0.3, 0.08);
+      playFunk(440.00, 0.4, 0.22);
+    }
   }
 
   playSneeze() {
@@ -4262,6 +4324,18 @@ document.querySelectorAll('.wallpaper-btn').forEach(btn => {
     
     audio.playPhoneTone(852, 1477, 0.15);
     showToast(`Wallpaper updated to ${wall.toUpperCase()}! 🌅`);
+  });
+});
+
+// Ringtone Settings buttons binder
+document.querySelectorAll('.ringtone-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const ring = btn.dataset.ringtone;
+    state.data.phoneRingtone = ring;
+    state.saveProfiles();
+    
+    audio.playPhoneRing();
+    showToast(`Ringtone updated to ${ring.toUpperCase()}! 🔔`);
   });
 });
 
