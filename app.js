@@ -3943,43 +3943,23 @@ document.querySelectorAll('.meowzon-buy-btn').forEach(btn => {
     const cost = parseInt(btn.dataset.cost);
     const item = btn.dataset.item;
     
-    if (state.data.coins < cost) {
-      audio.playPhoneTone(400, 440, 0.25);
-      showToast("Not enough Cat Coins! Play Catch the Mouse to earn more.");
-      return;
-    }
-    
-    const cat = state.data.activeCats[focusCatIndex];
-    if (!cat) {
-      showToast("No active cat selected to receive this item!");
-      return;
-    }
-    
-    state.data.coins -= cost;
-    state.saveProfiles();
-    
-    document.getElementById('phone-meowzon-coins').textContent = state.data.coins;
-    updateHeaderStats();
-    
-    audio.playPurr();
-    audio.playPhoneTone(941, 1477, 0.15);
-    
+    let stats = {};
+    let label = '';
     if (item === 'food') {
-      cat.hunger = Math.min(100, cat.hunger + 40);
-      showToast(`Ordered Premium Salmon Delivery! ${cat.name}'s Hunger restored +40.`);
+      stats = { hunger: 40 };
+      label = 'Premium Salmon';
     } else if (item === 'water') {
-      cat.thirst = Math.min(100, cat.thirst + 40);
-      showToast(`Ordered Sparkling Spring Water! ${cat.name}'s Thirst restored +40.`);
+      stats = { thirst: 40 };
+      label = 'Spring Water';
     } else if (item === 'toy') {
-      cat.affection = Math.min(100, cat.affection + 30);
-      showToast(`Ordered Catnip Play Ball! ${cat.name}'s Affection restored +30.`);
+      stats = { affection: 30 };
+      label = 'Catnip Yarn';
     } else if (item === 'shampoo') {
-      cat.cleanliness = Math.min(100, cat.cleanliness + 40);
-      showToast(`Ordered Luxury Dry-shampoo! ${cat.name}'s Cleanliness restored +40.`);
+      stats = { cleanliness: 40 };
+      label = 'Dry Shampoo';
     }
     
-    renderFocusCatDetails();
-    renderRoomScene();
+    placeDeliveryOrder(item, cost, stats, label);
   });
 });
 
@@ -6749,42 +6729,23 @@ function updateMeowMallUI() {
     card.querySelector('.meowmall-buy-btn').onclick = () => {
       buyMeowMallItem(item.id, item.cost, item.stats, item.name);
     };
-    
     shelf.appendChild(card);
   });
+
+  updateActiveDeliveriesUI();
+}
+
+function updateMeowzonUI() {
+  const mzCoins = document.getElementById('phone-meowzon-coins');
+  if (mzCoins && state.data) mzCoins.textContent = state.data.coins;
+  updateActiveDeliveriesUI();
 }
 
 function buyMeowMallItem(itemId, cost, stats, itemName) {
-  if (!state.data) return;
-  if (state.data.coins < cost) {
-    showToast("Not enough Cat Coins! 🪙");
-    audio.playPhoneTone(440, 480, 0.15);
-    return;
-  }
-
-  const cat = state.data.activeCats[focusCatIndex];
-  if (!cat) {
-    showToast("Choose an active playroom cat first!");
-    return;
-  }
-
-  state.data.coins -= cost;
-
-  if (stats.happy) cat.happy = Math.min(100, (cat.happy || 0) + stats.happy);
-  if (stats.energy) cat.energy = Math.min(100, (cat.energy || 0) + stats.energy);
-  if (stats.hunger) cat.hunger = Math.min(100, (cat.hunger || 0) + stats.hunger);
-  if (stats.affection) cat.affection = Math.min(100, (cat.affection || 0) + stats.affection);
-
-  state.saveProfiles();
-  audio.playPhoneTone(523, 784, 0.1);
-  showToast(`${cat.name} enjoyed ${itemName}! 😋✨`);
-
-  updateHeaderStats();
-  updateMeowMallUI();
-  renderRoomScene();
-  updateFocusCatDetailsUI();
+  placeDeliveryOrder(itemId, cost, stats, itemName);
 }
 
+// Bind tabs click listeners
 document.querySelectorAll('.meowmall-tab-btn').forEach(btn => {
   btn.onclick = () => {
     activeMeowMallStore = btn.dataset.store;
@@ -6792,6 +6753,119 @@ document.querySelectorAll('.meowmall-tab-btn').forEach(btn => {
     initMeowMallUI();
   };
 });
+
+// --- 🚚 SHOP DELIVERY QUEUE SYSTEM ---
+
+function placeDeliveryOrder(itemName, cost, stats, labelName) {
+  if (!state.data) return;
+  if (state.data.coins < cost) {
+    audio.playPhoneTone(400, 440, 0.25);
+    showToast("Not enough Cat Coins! Play minigames to earn more.");
+    return;
+  }
+  
+  const cat = state.data.activeCats[focusCatIndex];
+  if (!cat) {
+    showToast("No active cat selected to receive this item!");
+    return;
+  }
+  
+  state.data.coins -= cost;
+  
+  if (!state.data.activeDeliveries) {
+    state.data.activeDeliveries = [];
+  }
+  
+  state.data.activeDeliveries.push({
+    id: Date.now() + Math.random(),
+    itemName: itemName,
+    labelName: labelName,
+    cost: cost,
+    stats: stats,
+    catName: cat.name,
+    timeLeft: 12
+  });
+  
+  state.saveProfiles();
+  audio.playPhoneTone(941, 1477, 0.15);
+  
+  showToast(`🚚 Order Placed! ${labelName} arriving in 12s...`);
+  
+  updateHeaderStats();
+  updateMeowzonUI();
+  updateMeowMallUI();
+}
+
+function tickDeliveries() {
+  if (!state.data || !state.data.activeDeliveries || state.data.activeDeliveries.length === 0) return;
+
+  let changed = false;
+  state.data.activeDeliveries.forEach(delivery => {
+    delivery.timeLeft--;
+    if (delivery.timeLeft <= 0) {
+      const cat = state.data.activeCats.find(c => c.name === delivery.catName);
+      if (cat) {
+        const stats = delivery.stats;
+        if (stats.happy) cat.happy = Math.min(100, (cat.happy || 0) + stats.happy);
+        if (stats.energy) cat.energy = Math.min(100, (cat.energy || 0) + stats.energy);
+        if (stats.hunger) cat.hunger = Math.min(100, (cat.hunger || 0) + stats.hunger);
+        if (stats.thirst) cat.thirst = Math.min(100, (cat.thirst || 0) + stats.thirst);
+        if (stats.cleanliness) cat.cleanliness = Math.min(100, (cat.cleanliness || 0) + stats.cleanliness);
+        if (stats.affection) cat.affection = Math.min(100, (cat.affection || 0) + stats.affection);
+        
+        if (!audio.muted) {
+          audio.playPhoneTone(523, 659, 0.15);
+          setTimeout(() => {
+            if (!audio.muted) audio.playPhoneTone(659, 784, 0.2);
+          }, 120);
+        }
+        
+        showToast(`📦 Arrived: ${delivery.catName} received ${delivery.labelName}! ✨`);
+      }
+      delivery.arrived = true;
+      changed = true;
+    } else {
+      changed = true;
+    }
+  });
+
+  state.data.activeDeliveries = state.data.activeDeliveries.filter(d => !d.arrived);
+  
+  if (changed) {
+    state.saveProfiles();
+    updateMeowMallUI();
+    updateMeowzonUI();
+    renderRoomScene();
+    updateFocusCatDetailsUI();
+  }
+}
+
+function updateActiveDeliveriesUI() {
+  const mzContainer = document.getElementById('meowzon-active-deliveries-container');
+  const mmContainer = document.getElementById('meowmall-active-deliveries-container');
+  const deliveries = (state.data && state.data.activeDeliveries) ? state.data.activeDeliveries : [];
+
+  const renderList = (el, borderColor, textColor) => {
+    if (!el) return;
+    if (deliveries.length === 0) {
+      el.innerHTML = `<span style="color:#90a4ae; font-style:italic; font-size:0.5rem; text-align:center; display:block; width:100%; padding: 4px 0;">No pending deliveries</span>`;
+      return;
+    }
+    el.innerHTML = '';
+    deliveries.forEach(del => {
+      const row = document.createElement('div');
+      row.style.cssText = `display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.03); padding:3px 6px; border-radius:6px; border:1px solid ${borderColor}; box-sizing:border-box; margin-bottom: 2px;`;
+      row.innerHTML = `
+        <span style="font-weight:bold; color:${textColor}; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:130px;">🚚 ${del.labelName} (${del.catName})</span>
+        <span style="font-family:monospace; font-weight:bold; color:${textColor}; font-size:0.5rem;">Arriving in ${del.timeLeft}s</span>
+      `;
+      el.appendChild(row);
+    });
+  };
+
+  renderList(mzContainer, 'rgba(255,152,0,0.2)', '#e65100');
+  renderList(mmContainer, 'rgba(251,192,45,0.2)', '#f57f17');
+}
 
 
 document.getElementById('phone-lockscreen-unlock-btn').addEventListener('click', () => {
@@ -6812,6 +6886,7 @@ window.onload = () => {
     adjustRoomFurnitureVisibility(currentRoom);
     updateWallClock();
     setInterval(updateWallClock, 1000);
+    setInterval(tickDeliveries, 1000);
     if (state.data.activeCats.length === 0) {
       Views.switch('breeding-screen');
     } else {
