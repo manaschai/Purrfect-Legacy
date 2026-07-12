@@ -1681,8 +1681,9 @@ function renderFocusCatDetails() {
   const cat = state.data.activeCats[focusCatIndex];
   if (!cat) return;
 
+  const vaccineSuffix = cat.isVaccinated ? ' 🛡️' : '';
   const degreeSuffix = (cat.degrees && cat.degrees.length > 0) ? ` (${cat.degrees.join(', ')})` : '';
-  document.getElementById('focus-cat-name').textContent = cat.name + degreeSuffix;
+  document.getElementById('focus-cat-name').textContent = cat.name + degreeSuffix + vaccineSuffix;
   
   const personalityBadge = document.getElementById('focus-cat-personality');
   personalityBadge.textContent = PERSONALITIES[cat.personality].name;
@@ -2202,7 +2203,7 @@ function gameLoopTick() {
     }
 
     // Sickness checks
-    if (!cat.isSick) {
+    if (!cat.isSick && !cat.isVaccinated) {
       let sickChance = 0.002;
       if (cat.hunger < 20 || cat.thirst < 20 || cat.cleanliness < 20) {
         sickChance = 0.06;
@@ -6778,6 +6779,11 @@ const MEOWMALL_ITEMS = {
     { id: 'bakery_croissant', name: '🥐 Butter Croissant', cost: 8, desc: 'Hunger +15, Happiness +10', stats: { hunger: 15, happy: 10 } },
     { id: 'bakery_cupcake', name: '🧁 Kitten Cupcake', cost: 12, desc: 'Hunger +25, Happiness +15', stats: { hunger: 25, happy: 15 } },
     { id: 'bakery_baguette', name: '🥖 Catnip Baguette', cost: 15, desc: 'Hunger +35, Happiness +25', stats: { hunger: 35, happy: 25 } }
+  ],
+  pharmacy: [
+    { id: 'pharmacy_meds', name: '💊 Medication Pill', cost: 12, desc: 'Cures active sickness', stats: { cure: true } },
+    { id: 'pharmacy_vaccine', name: '💉 Kitten Vaccine', cost: 20, desc: 'Permanent Sickness Immunity', stats: { vaccine: true } },
+    { id: 'pharmacy_vitamins', name: '🩹 Vitamin Paste', cost: 8, desc: 'Energy +20, Happiness +20', stats: { energy: 20, happy: 20 } }
   ]
 };
 
@@ -6904,6 +6910,14 @@ function tickDeliveries() {
         if (stats.thirst) cat.thirst = Math.min(100, (cat.thirst || 0) + stats.thirst);
         if (stats.cleanliness) cat.cleanliness = Math.min(100, (cat.cleanliness || 0) + stats.cleanliness);
         if (stats.affection) cat.affection = Math.min(100, (cat.affection || 0) + stats.affection);
+        
+        if (stats.cure) {
+          cat.isSick = false;
+          cat.sicknessType = null;
+        }
+        if (stats.vaccine) {
+          cat.isVaccinated = true;
+        }
         
         if (!audio.muted) {
           audio.playPhoneTone(523, 659, 0.15);

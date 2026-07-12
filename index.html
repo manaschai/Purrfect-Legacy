@@ -947,6 +947,28 @@
                   </div>
                   <button class="btn meowzon-buy-btn" data-item="shampoo" data-cost="18" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">18 🪙</button>
                 </div>
+                <!-- Product Card 5: Meds -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">💊</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Medication Pill</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Cures active sickness</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="meds" data-cost="12" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">12 🪙</button>
+                </div>
+                <!-- Product Card 6: Vaccine -->
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.4rem;">💉</span>
+                    <div style="display:flex; flex-direction:column; text-align:left;">
+                      <strong style="font-size: 0.7rem;">Kitten Vaccine</strong>
+                      <span style="font-size: 0.55rem; color:#757575;">Permanent Sickness Immunity</span>
+                    </div>
+                  </div>
+                  <button class="btn meowzon-buy-btn" data-item="vaccine" data-cost="20" style="background:#ff9800; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold;">20 🪙</button>
+                </div>
                 <!-- Active Deliveries panel -->
                 <div style="border-top: 1.5px dashed #ff9800; padding: 4px 2px; display: flex; flex-direction: column; gap: 3px; font-size: 0.52rem; max-height: 55px; overflow-y: auto;" id="meowzon-active-deliveries-container">
                   <!-- Dynamic deliveries -->
@@ -1528,11 +1550,12 @@
                 <span style="font-family: var(--display-font); font-weight: 800; color: #f57f17; font-size: 0.95rem;">🛍️ Meow-Mall</span>
                 <span style="font-size: 0.72rem; font-weight: 700; color: #f57f17;">🪙 <span id="phone-meowmall-coins">0</span></span>
               </div>
-              <div style="display: flex; justify-content: space-around; background: #fff9c4; border-radius: 8px; padding: 3px; border: 1px solid #fff59d; gap: 3px;">
-                <button class="btn meowmall-tab-btn" data-store="icecream" style="flex: 1; padding: 4px 1px; font-size: 0.48rem; font-weight: bold; border-radius: 6px; border: none; background: #fbc02d; color: white; cursor: pointer;">🍦 IceCream</button>
-                <button class="btn meowmall-tab-btn" data-store="pizza" style="flex: 1; padding: 4px 1px; font-size: 0.48rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🍕 Pizza</button>
-                <button class="btn meowmall-tab-btn" data-store="toys" style="flex: 1; padding: 4px 1px; font-size: 0.48rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🧸 Toys</button>
-                <button class="btn meowmall-tab-btn" data-store="bakery" style="flex: 1; padding: 4px 1px; font-size: 0.48rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🥐 Bakery</button>
+              <div style="display: flex; justify-content: space-around; background: #fff9c4; border-radius: 8px; padding: 3px; border: 1px solid #fff59d; gap: 2px;">
+                <button class="btn meowmall-tab-btn" data-store="icecream" style="flex: 1; padding: 4px 1px; font-size: 0.44rem; font-weight: bold; border-radius: 6px; border: none; background: #fbc02d; color: white; cursor: pointer;">🍦 Ice</button>
+                <button class="btn meowmall-tab-btn" data-store="pizza" style="flex: 1; padding: 4px 1px; font-size: 0.44rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🍕 Pizza</button>
+                <button class="btn meowmall-tab-btn" data-store="toys" style="flex: 1; padding: 4px 1px; font-size: 0.44rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🧸 Toys</button>
+                <button class="btn meowmall-tab-btn" data-store="bakery" style="flex: 1; padding: 4px 1px; font-size: 0.44rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">🥐 Bake</button>
+                <button class="btn meowmall-tab-btn" data-store="pharmacy" style="flex: 1; padding: 4px 1px; font-size: 0.44rem; font-weight: bold; border-radius: 6px; border: none; background: transparent; color: #f57f17; cursor: pointer;">💊 Meds</button>
               </div>
               <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 2px; box-sizing: border-box;" id="meowmall-products-shelf">
                 <!-- Shelf items loaded dynamically -->
