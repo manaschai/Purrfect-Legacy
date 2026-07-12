@@ -1762,12 +1762,19 @@ function spawnBathBubble() {
 }
 
 function applySickStylingIfNeeded(wrapper, cat) {
-  if (cat && cat.isSick) {
+  if (!cat) return;
+  if (cat.isSick) {
     const badge = document.createElement('span');
     badge.textContent = cat.sicknessType.includes('Flu') ? '🤧' : (cat.sicknessType.includes('Fever') ? '🤮' : '😴');
     badge.style.cssText = "position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; z-index: 10; animation: float 1.5s ease-in-out infinite;";
     wrapper.appendChild(badge);
     wrapper.style.filter = "hue-rotate(90deg) saturate(1.2)";
+  } else if (cat.status === 'working') {
+    const badge = document.createElement('span');
+    badge.textContent = '👷';
+    badge.style.cssText = "position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; z-index: 10; animation: float 1.5s ease-in-out infinite;";
+    wrapper.appendChild(badge);
+    wrapper.style.opacity = "0.65";
   }
 }
 
@@ -3817,6 +3824,8 @@ function switchPhoneView(viewId) {
     initRingMakerUI();
   } else if (viewId === 'meowmall') {
     initMeowMallUI();
+  } else if (viewId === 'jobs') {
+    initJobsUI();
   }
 }
 
@@ -5983,7 +5992,8 @@ const APPS_CONFIG = {
   'meowtify': { name: 'Meowtify', icon: '🎵', bg: '#1db954' },
   'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' },
   'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' },
-  'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' }
+  'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' },
+  'jobs': { name: 'Meow-work', icon: '💼', bg: '#00897b' }
 };
 
 const DOWNLOADABLE_APPS = [
@@ -5993,7 +6003,8 @@ const DOWNLOADABLE_APPS = [
   { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' },
   { id: 'securitycam', name: 'Meowgle Cam', desc: 'Secure your house with live CCTV camera feeds of all rooms!', icon: '📹', bg: '#607d8b' },
   { id: 'ringmaker', name: 'Meow-lody Maker', desc: 'Compose your own custom ringtone using a simple step sequencer!', icon: '🎹', bg: '#d81b60' },
-  { id: 'meowmall', name: 'Meow-Mall', desc: 'Shop specialty stores: Sweet Scoop Ice Cream, Purr-fect Pizza, and Kitten Toys!', icon: '🛍️', bg: '#f57f17' }
+  { id: 'meowmall', name: 'Meow-Mall', desc: 'Shop specialty stores: Sweet Scoop Ice Cream, Purr-fect Pizza, and Kitten Toys!', icon: '🛍️', bg: '#f57f17' },
+  { id: 'jobs', name: 'Meow-work Gigs', desc: 'Send your playroom cats to work gig jobs to earn Cat Coins!', icon: '💼', bg: '#00897b' }
 ];
 
 function renderPhoneHomeScreen() {
@@ -6974,6 +6985,132 @@ function updateActiveDeliveriesUI() {
 }
 
 
+// --- 💼 MEOW-WORK GIGS SYSTEM ---
+
+const JOBS_CATALOG = [
+  { id: 'barista', name: '☕ Cafe Barista', reward: 15, energyCost: 25, duration: 10, reqText: 'Requires: 40+ Energy', reqCheck: (cat) => cat.energy >= 40 },
+  { id: 'courier', name: '📦 Mall Courier', reward: 22, energyCost: 30, duration: 12, reqText: 'Requires: Gen 2+', reqCheck: (cat) => cat.generation >= 2 },
+  { id: 'influencer', name: '🎨 Cat Influencer', reward: 30, energyCost: 20, duration: 15, reqText: 'Requires: 80+ Happiness', reqCheck: (cat) => cat.happy >= 80 },
+  { id: 'tutor', name: '🏫 Cat-Maps Math Tutor', reward: 45, energyCost: 25, duration: 18, reqText: 'Requires: Cat-culus Degree', reqCheck: (cat) => cat.degrees && cat.degrees.includes('Cat-culus') }
+];
+
+function initJobsUI() {
+  const activeLabel = document.getElementById('phone-jobs-active-cat');
+  const cat = state.data.activeCats[focusCatIndex];
+  if (activeLabel && cat) {
+    activeLabel.textContent = cat.name;
+  }
+  updateJobsUI();
+}
+
+function updateJobsUI() {
+  const container = document.getElementById('jobs-list-container');
+  const cat = state.data.activeCats[focusCatIndex];
+  if (!container || !state.data) return;
+  if (!cat) {
+    container.innerHTML = `<span style="color:#7f8c8d; font-style:italic; font-size:0.6rem; text-align:center; display:block; padding:20px;">No active cat selected!</span>`;
+    return;
+  }
+
+  container.innerHTML = '';
+
+  if (cat.status === 'working' && cat.activeJob) {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1.5px solid #009688; border-radius: 12px; padding: 12px; display:flex; flex-direction:column; gap:8px; text-align:center;";
+    
+    const pct = Math.floor(((cat.activeJob.duration - cat.jobTimeLeft) / cat.activeJob.duration) * 100);
+    card.innerHTML = `
+      <strong style="font-size:0.75rem; color:#00796b;">💼 Busy Working</strong>
+      <span style="font-size:0.6rem; color:#555;">${cat.name} is away at ${cat.activeJob.name}...</span>
+      <div style="background:#e0f2f1; height:8px; border-radius:4px; overflow:hidden; position:relative; margin-top:4px;">
+        <div style="width:${pct}%; height:100%; background:#009688; transition:width 0.5s;"></div>
+      </div>
+      <span style="font-size:0.5rem; color:#00796b; font-weight:bold;">${cat.jobTimeLeft}s remaining</span>
+    `;
+    container.appendChild(card);
+    return;
+  }
+
+  JOBS_CATALOG.forEach(job => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #b2dfdb; border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 4px;";
+    
+    const met = job.reqCheck(cat);
+    
+    card.innerHTML = `
+      <div style="display: flex; flex-direction: column; text-align: left; gap: 2px;">
+        <strong style="font-size: 0.72rem; color: #004d40;">${job.name}</strong>
+        <span style="font-size: 0.52rem; color: #757575;">Reward: <span style="color:#00796b; font-weight:bold;">${job.reward} 🪙</span> • Cost: ${job.energyCost} Energy</span>
+        <span style="font-size: 0.48rem; font-weight: bold; color: ${met ? '#2e7d32' : '#c62828'};">${job.reqText}</span>
+      </div>
+      <button class="btn jobs-start-btn" style="background:${met ? '#009688' : '#b2dfdb'}; color:white; border:none; padding:6px 10px; font-size:0.6rem; border-radius:6px; font-weight:bold; cursor:${met ? 'pointer' : 'not-allowed'};" ${met ? '' : 'disabled'}>
+        Start
+      </button>
+    `;
+
+    if (met) {
+      card.querySelector('.jobs-start-btn').onclick = () => {
+        cat.status = 'working';
+        cat.activeJob = job;
+        cat.jobTimeLeft = job.duration;
+        state.saveProfiles();
+        audio.playPhoneTone(659, 880, 0.12);
+        showToast(`👷 ${cat.name} went to work at ${job.name}!`);
+        
+        renderRoomScene();
+        updateJobsUI();
+      };
+    }
+    
+    container.appendChild(card);
+  });
+}
+
+function tickWorkingCats() {
+  if (!state.data || !state.data.activeCats || state.data.activeCats.length === 0) return;
+
+  let changed = false;
+  state.data.activeCats.forEach(cat => {
+    if (cat.status === 'working' && cat.activeJob) {
+      cat.jobTimeLeft--;
+      if (cat.jobTimeLeft <= 0) {
+        const job = cat.activeJob;
+        state.data.coins += job.reward;
+        cat.energy = Math.max(0, cat.energy - job.energyCost);
+        cat.status = 'idle';
+        
+        if (!audio.muted) {
+          audio.playPhoneTone(587.33, 587.33, 0.1);
+          setTimeout(() => {
+            if (!audio.muted) audio.playPhoneTone(880, 880, 0.15);
+          }, 80);
+        }
+        
+        showToast(`💼 completed work: ${cat.name} completed ${job.name} and earned ${job.reward} 🪙!`);
+        
+        delete cat.activeJob;
+        delete cat.jobTimeLeft;
+        changed = true;
+      } else {
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) {
+    state.saveProfiles();
+    updateHeaderStats();
+    renderRoomScene();
+    updateFocusCatDetailsUI();
+    
+    const jobsView = document.getElementById('phone-view-jobs');
+    if (jobsView && jobsView.style.display === 'flex') {
+      updateJobsUI();
+    }
+  }
+}
+
+
 document.getElementById('phone-lockscreen-unlock-btn').addEventListener('click', () => {
   audio.playPhoneTone(523, 659, 0.08);
   setTimeout(() => {
@@ -6993,6 +7130,7 @@ window.onload = () => {
     updateWallClock();
     setInterval(updateWallClock, 1000);
     setInterval(tickDeliveries, 1000);
+    setInterval(tickWorkingCats, 1000);
     if (state.data.activeCats.length === 0) {
       Views.switch('breeding-screen');
     } else {
