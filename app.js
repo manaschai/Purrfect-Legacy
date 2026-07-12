@@ -3770,6 +3770,8 @@ function switchPhoneView(viewId) {
     initSecurityCamUI();
   } else if (viewId === 'ringmaker') {
     initRingMakerUI();
+  } else if (viewId === 'meowmall') {
+    initMeowMallUI();
   }
 }
 
@@ -5907,7 +5909,8 @@ const APPS_CONFIG = {
   'cattube': { name: 'CatTube', icon: '📺', bg: '#f44336' },
   'meowtify': { name: 'Meowtify', icon: '🎵', bg: '#1db954' },
   'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' },
-  'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' }
+  'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' },
+  'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' }
 };
 
 const DOWNLOADABLE_APPS = [
@@ -5916,7 +5919,8 @@ const DOWNLOADABLE_APPS = [
   { id: 'catfit', name: 'CatFit', desc: 'Track your kittens daily steps, calories burned, and active times!', icon: '🏃', bg: '#ff5722' },
   { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' },
   { id: 'securitycam', name: 'Meowgle Cam', desc: 'Secure your house with live CCTV camera feeds of all rooms!', icon: '📹', bg: '#607d8b' },
-  { id: 'ringmaker', name: 'Meow-lody Maker', desc: 'Compose your own custom ringtone using a simple step sequencer!', icon: '🎹', bg: '#d81b60' }
+  { id: 'ringmaker', name: 'Meow-lody Maker', desc: 'Compose your own custom ringtone using a simple step sequencer!', icon: '🎹', bg: '#d81b60' },
+  { id: 'meowmall', name: 'Meow-Mall', desc: 'Shop specialty stores: Sweet Scoop Ice Cream, Purr-fect Pizza, and Kitten Toys!', icon: '🛍️', bg: '#f57f17' }
 ];
 
 function renderPhoneHomeScreen() {
@@ -6678,6 +6682,111 @@ function saveCustomMelody() {
 document.getElementById('ringmaker-play-btn').addEventListener('click', playSequencer);
 document.getElementById('ringmaker-clear-btn').addEventListener('click', clearSequencer);
 document.getElementById('ringmaker-save-btn').addEventListener('click', saveCustomMelody);
+
+
+// --- 🛍️ MEOW-MALL APP STORE SYSTEM ---
+
+const MEOWMALL_ITEMS = {
+  icecream: [
+    { id: 'icecream_strawberry', name: '🍓 Strawberry Scoop', cost: 8, desc: 'Happiness +15, Energy +10', stats: { happy: 15, energy: 10 } },
+    { id: 'icecream_choco', name: '🍫 Double Choco Scoop', cost: 10, desc: 'Happiness +20, Energy +12', stats: { happy: 20, energy: 12 } },
+    { id: 'icecream_mint', name: '🍨 Minty Fish Gelato', cost: 12, desc: 'Happiness +25, Energy +15', stats: { happy: 25, energy: 15 } }
+  ],
+  pizza: [
+    { id: 'pizza_margherita', name: '🧀 Margherita Slice', cost: 12, desc: 'Hunger +25, Happiness +10', stats: { hunger: 25, happy: 10 } },
+    { id: 'pizza_anchovy', name: '🐟 Anchovy Special', cost: 15, desc: 'Hunger +35, Happiness +15', stats: { hunger: 35, happy: 15 } },
+    { id: 'pizza_meat', name: '🥩 Meat Lovers Slice', cost: 18, desc: 'Hunger +45, Happiness +20', stats: { hunger: 45, happy: 20 } }
+  ],
+  toys: [
+    { id: 'toy_mouse', name: '🐭 Clockwork Mouse', cost: 10, desc: 'Affection +20, Happiness +15', stats: { affection: 20, happy: 15 } },
+    { id: 'toy_laser', name: '🔴 Laser Pointer', cost: 15, desc: 'Affection +35, Happiness +25', stats: { affection: 35, happy: 25 } },
+    { id: 'toy_feather', name: 'Feather Teaser', cost: 8, desc: 'Affection +15, Happiness +10', stats: { affection: 15, happy: 10 } }
+  ]
+};
+
+let activeMeowMallStore = 'icecream';
+
+function initMeowMallUI() {
+  document.querySelectorAll('.meowmall-tab-btn').forEach(btn => {
+    const active = btn.dataset.store === activeMeowMallStore;
+    btn.style.background = active ? '#fbc02d' : 'transparent';
+    btn.style.color = active ? '#5d4037' : '#f57f17';
+  });
+  updateMeowMallUI();
+}
+
+function updateMeowMallUI() {
+  const shelf = document.getElementById('meowmall-products-shelf');
+  const mmCoins = document.getElementById('phone-meowmall-coins');
+  const mzCoins = document.getElementById('phone-meowzon-coins');
+  
+  if (mmCoins && state.data) mmCoins.textContent = state.data.coins;
+  if (mzCoins && state.data) mzCoins.textContent = state.data.coins;
+  if (!shelf || !state.data) return;
+
+  shelf.innerHTML = '';
+  const items = MEOWMALL_ITEMS[activeMeowMallStore] || [];
+  
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #fff59d; border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 4px;";
+    
+    card.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display:flex; flex-direction:column; text-align:left;">
+          <strong style="font-size: 0.72rem; color: #37474f;">${item.name}</strong>
+          <span style="font-size: 0.52rem; color:#78909c;">${item.desc}</span>
+        </div>
+      </div>
+      <button class="btn meowmall-buy-btn" style="background:#f57f17; color:white; border:none; padding:4px 10px; font-size:0.65rem; border-radius:6px; font-weight:bold; cursor:pointer;">${item.cost} 🪙</button>
+    `;
+    
+    card.querySelector('.meowmall-buy-btn').onclick = () => {
+      buyMeowMallItem(item.id, item.cost, item.stats, item.name);
+    };
+    
+    shelf.appendChild(card);
+  });
+}
+
+function buyMeowMallItem(itemId, cost, stats, itemName) {
+  if (!state.data) return;
+  if (state.data.coins < cost) {
+    showToast("Not enough Cat Coins! 🪙");
+    audio.playPhoneTone(440, 480, 0.15);
+    return;
+  }
+
+  const cat = state.data.activeCats[focusCatIndex];
+  if (!cat) {
+    showToast("Choose an active playroom cat first!");
+    return;
+  }
+
+  state.data.coins -= cost;
+
+  if (stats.happy) cat.happy = Math.min(100, (cat.happy || 0) + stats.happy);
+  if (stats.energy) cat.energy = Math.min(100, (cat.energy || 0) + stats.energy);
+  if (stats.hunger) cat.hunger = Math.min(100, (cat.hunger || 0) + stats.hunger);
+  if (stats.affection) cat.affection = Math.min(100, (cat.affection || 0) + stats.affection);
+
+  state.saveProfiles();
+  audio.playPhoneTone(523, 784, 0.1);
+  showToast(`${cat.name} enjoyed ${itemName}! 😋✨`);
+
+  updateHeaderStats();
+  updateMeowMallUI();
+  renderRoomScene();
+  updateFocusCatDetailsUI();
+}
+
+document.querySelectorAll('.meowmall-tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    activeMeowMallStore = btn.dataset.store;
+    audio.playPhoneTone(700, 850, 0.05);
+    initMeowMallUI();
+  };
+});
 
 
 document.getElementById('phone-lockscreen-unlock-btn').addEventListener('click', () => {
