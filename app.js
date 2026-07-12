@@ -3714,7 +3714,7 @@ document.querySelectorAll('.phone-app-btn').forEach(btn => {
   });
 });
 
-document.getElementById('phone-app-home-btn').addEventListener('click', () => {
+function handlePhoneHomeAction() {
   audio.playPhoneTone(440, 480, 0.08);
   const homeView = document.getElementById('phone-view-home');
   if (homeView && homeView.style.display === 'flex') {
@@ -3736,7 +3736,10 @@ document.getElementById('phone-app-home-btn').addEventListener('click', () => {
   } else {
     switchPhoneView('home');
   }
-});
+}
+
+document.getElementById('phone-app-home-btn').addEventListener('click', handlePhoneHomeAction);
+document.getElementById('phone-virtual-nav-bar').addEventListener('click', handlePhoneHomeAction);
 
 // --- MESSAGES CHAT APP LOGIC ---
 const chatContactSelect = document.getElementById('phone-chat-contact-select');
