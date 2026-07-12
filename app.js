@@ -6701,6 +6701,11 @@ const MEOWMALL_ITEMS = {
     { id: 'toy_mouse', name: '🐭 Clockwork Mouse', cost: 10, desc: 'Affection +20, Happiness +15', stats: { affection: 20, happy: 15 } },
     { id: 'toy_laser', name: '🔴 Laser Pointer', cost: 15, desc: 'Affection +35, Happiness +25', stats: { affection: 35, happy: 25 } },
     { id: 'toy_feather', name: 'Feather Teaser', cost: 8, desc: 'Affection +15, Happiness +10', stats: { affection: 15, happy: 10 } }
+  ],
+  bakery: [
+    { id: 'bakery_croissant', name: '🥐 Butter Croissant', cost: 8, desc: 'Hunger +15, Happiness +10', stats: { hunger: 15, happy: 10 } },
+    { id: 'bakery_cupcake', name: '🧁 Kitten Cupcake', cost: 12, desc: 'Hunger +25, Happiness +15', stats: { hunger: 25, happy: 15 } },
+    { id: 'bakery_baguette', name: '🥖 Catnip Baguette', cost: 15, desc: 'Hunger +35, Happiness +25', stats: { hunger: 35, happy: 25 } }
   ]
 };
 
