@@ -3675,6 +3675,9 @@ function switchPhoneView(viewId) {
     clearInterval(cattubeVideoInterval);
     cattubeVideoInterval = null;
   }
+  if (viewId !== 'ringmaker' && typeof stopSequencer !== 'undefined') {
+    stopSequencer();
+  }
   if (viewId !== 'securitycam' && typeof securityCamTickInterval !== 'undefined' && securityCamTickInterval) {
     clearInterval(securityCamTickInterval);
     securityCamTickInterval = null;
@@ -3765,6 +3768,8 @@ function switchPhoneView(viewId) {
     initCattitudeUI();
   } else if (viewId === 'securitycam') {
     initSecurityCamUI();
+  } else if (viewId === 'ringmaker') {
+    initRingMakerUI();
   }
 }
 
@@ -5901,8 +5906,8 @@ const APPS_CONFIG = {
   'play': { name: 'Meowgle Play', icon: '🤖', bg: '#607d8b' },
   'cattube': { name: 'CatTube', icon: '📺', bg: '#f44336' },
   'meowtify': { name: 'Meowtify', icon: '🎵', bg: '#1db954' },
-  'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' },
-  'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' }
+  'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' },
+  'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' }
 };
 
 const DOWNLOADABLE_APPS = [
@@ -5910,7 +5915,8 @@ const DOWNLOADABLE_APPS = [
   { id: 'meowtify', name: 'Meowtify', desc: 'Listen to soothing ambient tracks: deep purrs, rain, and chirping forest birds!', icon: '🎵', bg: '#1db954' },
   { id: 'catfit', name: 'CatFit', desc: 'Track your kittens daily steps, calories burned, and active times!', icon: '🏃', bg: '#ff5722' },
   { id: 'cattitude', name: 'Cattitude', desc: 'Explore the cats-only social media feed! Like and read neighborhood posts!', icon: '📸', bg: '#e91e63' },
-  { id: 'securitycam', name: 'Meowgle Cam', desc: 'Secure your house with live CCTV camera feeds of all rooms!', icon: '📹', bg: '#607d8b' }
+  { id: 'securitycam', name: 'Meowgle Cam', desc: 'Secure your house with live CCTV camera feeds of all rooms!', icon: '📹', bg: '#607d8b' },
+  { id: 'ringmaker', name: 'Meow-lody Maker', desc: 'Compose your own custom ringtone using a simple step sequencer!', icon: '🎹', bg: '#d81b60' }
 ];
 
 function renderPhoneHomeScreen() {
@@ -6449,6 +6455,9 @@ document.querySelectorAll('.close-modal-btn').forEach(btn => {
       clearInterval(securityCamTickInterval);
       securityCamTickInterval = null;
     }
+    if (typeof stopSequencer !== 'undefined') {
+      stopSequencer();
+    }
     stopPhoneRingingSound();
   });
 });
@@ -6513,6 +6522,163 @@ function updateLockScreenUI() {
     });
   }
 }
+
+// --- 🎹 MEOW-LODY MAKER SEQUENCER SYSTEM ---
+
+let customMelodyGrid = [
+  ['C5', false, false, false, false, false, false, false, false],
+  ['A4', false, false, false, false, false, false, false, false],
+  ['G4', false, false, false, false, false, false, false, false],
+  ['E4', false, false, false, false, false, false, false, false],
+  ['C4', false, false, false, false, false, false, false, false]
+];
+
+let ringmakerIsPlaying = false;
+let ringmakerBeatIndex = 0;
+let ringmakerInterval = null;
+
+function initRingMakerUI() {
+  if (state.data && state.data.customMelody) {
+    customMelodyGrid.forEach(row => {
+      const noteName = row[0];
+      for (let beat = 1; beat <= 8; beat++) {
+        const stepNotes = state.data.customMelody[beat - 1] || [];
+        row[beat] = stepNotes.includes(noteName);
+      }
+    });
+  } else {
+    customMelodyGrid.forEach(row => {
+      const noteName = row[0];
+      for (let beat = 1; beat <= 8; beat++) {
+        row[beat] = false;
+      }
+    });
+    customMelodyGrid[4][1] = true;
+    customMelodyGrid[3][3] = true;
+    customMelodyGrid[2][5] = true;
+    customMelodyGrid[0][7] = true;
+  }
+
+  renderSequencerGrid();
+}
+
+function renderSequencerGrid() {
+  const container = document.getElementById('ringmaker-sequencer-grid');
+  if (!container) return;
+
+  container.innerHTML = '';
+  customMelodyGrid.forEach((row, rowIdx) => {
+    const rowEl = document.createElement('div');
+    rowEl.style.cssText = "display: grid; grid-template-columns: 20px repeat(8, 1fr); gap: 4px; align-items: center;";
+    
+    const label = document.createElement('span');
+    label.style.cssText = "font-size: 0.52rem; font-weight: bold; color: #880e4f; text-align: center;";
+    label.textContent = row[0];
+    rowEl.appendChild(label);
+    
+    for (let beat = 1; beat <= 8; beat++) {
+      const active = row[beat];
+      const cell = document.createElement('div');
+      cell.className = 'ringmaker-cell';
+      cell.dataset.row = rowIdx;
+      cell.dataset.beat = beat;
+      
+      cell.style.cssText = `height: 18px; border-radius: 4px; border: 1px solid #f8bbd0; cursor: pointer; transition: background 0.1s; background: ${active ? '#d81b60' : '#fce4ec'};`;
+      
+      if (ringmakerIsPlaying && ringmakerBeatIndex === beat - 1) {
+        cell.style.border = "1.5px solid #ab47bc";
+        if (active) cell.style.background = "#e91e63";
+      }
+
+      cell.onclick = () => {
+        row[beat] = !row[beat];
+        cell.style.background = row[beat] ? '#d81b60' : '#fce4ec';
+        if (row[beat]) {
+          const freqs = { 'C5': 523.25, 'A4': 440.00, 'G4': 392.00, 'E4': 329.63, 'C4': 261.63 };
+          audio.playPhoneTone(freqs[row[0]], freqs[row[0]], 0.1);
+        }
+      };
+
+      rowEl.appendChild(cell);
+    }
+    
+    container.appendChild(rowEl);
+  });
+}
+
+function playSequencer() {
+  if (ringmakerIsPlaying) {
+    stopSequencer();
+    return;
+  }
+
+  ringmakerIsPlaying = true;
+  ringmakerBeatIndex = 0;
+  document.getElementById('ringmaker-play-btn').textContent = '⏹️ Stop Play';
+  
+  const freqs = { 'C5': 523.25, 'A4': 440.00, 'G4': 392.00, 'E4': 329.63, 'C4': 261.63 };
+  
+  ringmakerInterval = setInterval(() => {
+    renderSequencerGrid();
+    
+    customMelodyGrid.forEach(row => {
+      const noteName = row[0];
+      const active = row[ringmakerBeatIndex + 1];
+      if (active && !audio.muted) {
+        audio.playPhoneTone(freqs[noteName], freqs[noteName], 0.12);
+      }
+    });
+
+    ringmakerBeatIndex = (ringmakerBeatIndex + 1) % 8;
+  }, 220);
+}
+
+function stopSequencer() {
+  ringmakerIsPlaying = false;
+  if (ringmakerInterval) {
+    clearInterval(ringmakerInterval);
+    ringmakerInterval = null;
+  }
+  document.getElementById('ringmaker-play-btn').textContent = '▶️ Play Composer';
+  renderSequencerGrid();
+}
+
+function clearSequencer() {
+  customMelodyGrid.forEach(row => {
+    for (let beat = 1; beat <= 8; beat++) {
+      row[beat] = false;
+    }
+  });
+  audio.playPhoneTone(300, 300, 0.1);
+  renderSequencerGrid();
+}
+
+function saveCustomMelody() {
+  if (!state.data) return;
+
+  const melodySteps = [];
+  for (let beat = 1; beat <= 8; beat++) {
+    const stepNotes = [];
+    customMelodyGrid.forEach(row => {
+      if (row[beat]) stepNotes.push(row[0]);
+    });
+    melodySteps.push(stepNotes);
+  }
+
+  state.data.customMelody = melodySteps;
+  state.data.phoneRingtone = 'custom';
+  state.saveProfiles();
+  
+  audio.playPhoneTone(523, 659, 0.15);
+  showToast("Custom Ringtone saved! 🎹💾");
+  
+  switchPhoneView('settings');
+}
+
+document.getElementById('ringmaker-play-btn').addEventListener('click', playSequencer);
+document.getElementById('ringmaker-clear-btn').addEventListener('click', clearSequencer);
+document.getElementById('ringmaker-save-btn').addEventListener('click', saveCustomMelody);
+
 
 document.getElementById('phone-lockscreen-unlock-btn').addEventListener('click', () => {
   audio.playPhoneTone(523, 659, 0.08);

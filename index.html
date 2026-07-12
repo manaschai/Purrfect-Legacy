@@ -1485,6 +1485,32 @@
               </div>
             </div>
 
+            <!-- 20. MEOW-LODY MAKER APP VIEW -->
+            <div class="phone-view" id="phone-view-ringmaker" style="display: none; flex-direction: column; background: #faf0e6; height: 100%; justify-content: space-between; color: var(--text-dark); text-align: left; padding: 10px; gap: 8px; box-sizing: border-box;">
+              <div style="font-family: var(--display-font); font-weight: 800; color: #d81b60; font-size: 0.95rem; border-bottom: 2px solid #ec407a; padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🎹 Meow-lody Maker</span>
+                <span style="font-size: 0.55rem; background: #ec407a; color: white; padding: 1px 6px; border-radius: 8px; font-weight: bold;">Composer</span>
+              </div>
+              <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-around; background: white; border: 1.5px solid #f8bbd0; border-radius: 12px; padding: 8px; gap: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.04); box-sizing: border-box;">
+                <div style="display: grid; grid-template-columns: 20px repeat(8, 1fr); text-align: center; font-size: 0.45rem; color: #7f8c8d; font-weight: bold;">
+                  <span>N</span>
+                  <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;" id="ringmaker-sequencer-grid">
+                  <!-- Dynamic sequencer rows -->
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; width: 100%;">
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 6px;">
+                  <button id="ringmaker-play-btn" class="btn" style="padding: 6px; font-size: 0.65rem; font-weight: bold; border-radius: 8px; border: none; background: #ab47bc; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">▶️ Play Composer</button>
+                  <button id="ringmaker-clear-btn" class="btn" style="padding: 6px; font-size: 0.65rem; font-weight: bold; border-radius: 8px; border: none; background: #e53935; color: white; cursor: pointer;">🧹 Clear</button>
+                </div>
+                <button id="ringmaker-save-btn" class="btn primary-btn" style="width: 100%; padding: 8px 0; font-size: 0.72rem; font-weight: bold; border-radius: 10px; border: none; background: #d81b60; color: white; cursor: pointer; box-shadow: 0 3px 6px rgba(216,27,96,0.3); display: flex; align-items: center; justify-content: center; gap: 4px;">
+                  💾 Set as Phone Ringtone
+                </button>
+              </div>
+            </div>
+
             <!-- Virtual soft-key Home Bar inside the phone viewport -->
             <div style="height: 16px; background: rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; z-index: 99; cursor: pointer; border-top: 1px solid rgba(0,0,0,0.05); box-sizing: border-box;" id="phone-virtual-nav-bar">
               <div id="phone-virtual-home-btn" style="width: 55px; height: 4px; border-radius: 2px; background: #78909c; opacity: 0.7; transition: background 0.15s;"></div>
