@@ -3472,7 +3472,7 @@ document.getElementById('interactive-phone').addEventListener('click', () => {
   audio.playPhoneTone(350, 440, 0.12);
   
   initPhoneKids();
-  switchPhoneView('home');
+  switchPhoneView('lockscreen');
 });
 
 document.querySelectorAll('.phone-dial-btn').forEach(btn => {
@@ -3627,6 +3627,10 @@ function switchPhoneView(viewId) {
   const activeView = document.getElementById(`phone-view-${viewId}`);
   if (activeView) {
     activeView.style.display = 'flex';
+  }
+
+  if (viewId === 'lockscreen') {
+    updateLockScreenUI();
   }
 
   if (viewId === 'home') {
@@ -6378,6 +6382,67 @@ document.getElementById('audio-toggle-btn').addEventListener('click', () => {
   const btn = document.getElementById('audio-toggle-btn');
   btn.textContent = isMuted ? '🔇' : '🔊';
   showToast(isMuted ? 'Muted sound' : 'Enabled sound');
+});
+
+
+// --- 🔓 LOCK SCREEN SYSTEM ---
+
+function updateLockScreenUI() {
+  const timeEl = document.getElementById('phone-lockscreen-time');
+  const dateEl = document.getElementById('phone-lockscreen-date');
+  const notifContainer = document.getElementById('phone-lockscreen-notifications');
+  
+  if (timeEl) {
+    timeEl.textContent = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+  }
+  
+  if (dateEl && state.data) {
+    const y = state.data.year || 1;
+    const m = state.data.month || 1;
+    const d = state.data.day || 1;
+    const months = ['Meow-rch', 'Purr-il', 'May-ow', 'June-ip', 'July-cat', 'Aug-hiss', 'Sept-claw', 'Oct-tail', 'Nov-ear', 'Dec-paw', 'Jan-mew', 'Feb-purr'];
+    const monthName = months[(m - 1) % 12];
+    dateEl.textContent = `Year ${y} • ${monthName} • Day ${d}`;
+  }
+
+  if (notifContainer && state.data) {
+    notifContainer.innerHTML = '';
+    
+    const notifs = [
+      { app: '💬 Messages', icon: '🐱', content: `Luna: "I'd love some fresh salmon! 🐾"` },
+      { app: '🏃 CatFit', icon: '👟', content: `Daily Total: ${(state.data.catSteps || 1040).toLocaleString()} steps tracked!` }
+    ];
+    
+    if (state.data.coins < 15) {
+      notifs.push({ app: '🛒 Meow-zon', icon: '🪙', content: 'Bank alert: low coin balance! Play minigames to earn!' });
+    } else {
+      notifs.push({ app: '📿 Collar Maker', icon: '💎', content: 'Design collars for your cats in the Craft Studio!' });
+    }
+    
+    notifs.forEach(notif => {
+      const card = document.createElement('div');
+      card.style.cssText = "background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border-radius: 12px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; border: 1px solid rgba(255, 255, 255, 0.1); box-sizing: border-box;";
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.5rem; font-weight:800; color:#e0f7fa; text-transform:uppercase;">
+          <span>${notif.app}</span>
+          <span>Just Now</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+          <span style="font-size:0.8rem;">${notif.icon}</span>
+          <span style="font-size:0.55rem; color:#fff; line-height:1.2;">${notif.content}</span>
+        </div>
+      `;
+      notifContainer.appendChild(card);
+    });
+  }
+}
+
+document.getElementById('phone-lockscreen-unlock-btn').addEventListener('click', () => {
+  audio.playPhoneTone(523, 659, 0.08);
+  setTimeout(() => {
+    if (!audio.muted) audio.playPhoneTone(784, 1047, 0.08);
+  }, 80);
+  switchPhoneView('home');
 });
 
 
