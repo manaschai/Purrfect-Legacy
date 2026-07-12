@@ -1760,6 +1760,16 @@ function spawnBathBubble() {
   setTimeout(() => bubble.remove(), 2500);
 }
 
+function applySickStylingIfNeeded(wrapper, cat) {
+  if (cat && cat.isSick) {
+    const badge = document.createElement('span');
+    badge.textContent = cat.sicknessType.includes('Flu') ? '🤧' : (cat.sicknessType.includes('Fever') ? '🤮' : '😴');
+    badge.style.cssText = "position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; z-index: 10; animation: float 1.5s ease-in-out infinite;";
+    wrapper.appendChild(badge);
+    wrapper.style.filter = "hue-rotate(90deg) saturate(1.2)";
+  }
+}
+
 function renderRoomScene() {
   const catsArea = document.getElementById('cats-render-area');
   catsArea.innerHTML = '';
@@ -1770,6 +1780,7 @@ function renderRoomScene() {
       wrapper.className = `cat-avatar-wrapper`;
       wrapper.style.left = state.data.activeCats.length === 2 ? `${25 + idx * 35}%` : `40%`;
       wrapper.innerHTML = renderCatSVG(cat);
+      applySickStylingIfNeeded(wrapper, cat);
       
       wrapper.onclick = (e) => {
         triggerInteraction('pet', idx, e.clientX, e.clientY);
@@ -1783,6 +1794,7 @@ function renderRoomScene() {
       wrapper.className = `cat-avatar-wrapper in-bath`;
       wrapper.style.left = state.data.activeCats.length === 2 ? `${28 + idx * 28}%` : `40%`;
       wrapper.innerHTML = renderCatSVG(cat);
+      applySickStylingIfNeeded(wrapper, cat);
       
       wrapper.onclick = (e) => {
         triggerInteraction('pet', idx, e.clientX, e.clientY);
@@ -1800,6 +1812,7 @@ function renderRoomScene() {
       wrapper.style.left = state.data.activeCats.length === 2 ? `${28 + idx * 28}%` : `40%`;
       wrapper.style.bottom = '35px'; // sit slightly higher behind the desk
       wrapper.innerHTML = renderCatSVG(cat);
+      applySickStylingIfNeeded(wrapper, cat);
       
       wrapper.onclick = () => {
         audio.playMeow(1.0);
@@ -1832,6 +1845,7 @@ function renderRoomScene() {
         wrapper.className = `cat-avatar-wrapper`;
         wrapper.style.left = state.data.activeCats.length === 2 ? `${45 + idx * 22}%` : `55%`;
         wrapper.innerHTML = renderCatSVG(cat);
+        applySickStylingIfNeeded(wrapper, cat);
         
         wrapper.onclick = (e) => {
           triggerInteraction('pet', idx, e.clientX, e.clientY);
@@ -2187,6 +2201,30 @@ function gameLoopTick() {
       showToast(`${cat.name} woke up because they are starving!`);
     }
 
+    // Sickness checks
+    if (!cat.isSick) {
+      let sickChance = 0.002;
+      if (cat.hunger < 20 || cat.thirst < 20 || cat.cleanliness < 20) {
+        sickChance = 0.06;
+      }
+      if (Math.random() < sickChance) {
+        const sicknesses = ["Hairball Fever 🤮", "Sneezy Flu 🤧", "Sleepyitis 😴"];
+        cat.isSick = true;
+        cat.sicknessType = sicknesses[Math.floor(Math.random() * sicknesses.length)];
+        audio.playMeow(0.85); 
+        showToast(`⚠️ Alert: ${cat.name} got sick with ${cat.sicknessType}! Take them to Whisker Vet Clinic. 🏥`);
+        // Trigger screen alert notifications
+        renderRoomScene();
+      }
+    } else {
+      cat.happy = Math.max(0, (cat.happy || 100) - 1);
+      cat.affection = Math.max(0, cat.affection - 0.4);
+      if (cat.sicknessType.includes('Flu') && Math.random() < 0.08) {
+        audio.playPhoneTone(700, 1000, 0.08);
+        showToast(`*Achoo!* ${cat.name} sneezed. 🤧`);
+      }
+    }
+
     // Ticks Growth when happy/healthy
     if (cat.growth < 100) {
       if (cat.hunger > 45 && cat.thirst > 45 && cat.cleanliness > 45 && cat.affection > 45) {
@@ -2491,6 +2529,12 @@ document.querySelectorAll('.care-btn').forEach(btn => {
 
 // Trigger Breeding next generation
 document.getElementById('breed-next-generation-btn').addEventListener('click', () => {
+  const sickCat = state.data.activeCats.find(c => c.isSick);
+  if (sickCat) {
+    showToast(`⚠️ Cannot breed! ${sickCat.name} is sick with ${sickCat.sicknessType}. Visit the Vet Clinic first! 🏥`);
+    audio.playPhoneTone(400, 440, 0.25);
+    return;
+  }
   if (confirm('Are you ready to find a partner, breed, and adopt the next generation of kittens? The current parents will retire to the Back Room.')) {
     Views.switch('breeding-screen');
   }
@@ -4438,6 +4482,11 @@ const MAPS_LOCATIONS = {
     name: "🏡 Grandparents' Country Farm",
     desc: "A wide grass field and cozy red farmhouse. Your ancestors, grandparents, and old generations rest here happily, baking cookies.",
     traffic: "Isolated Country Roads (Open Skies)"
+  },
+  vet: {
+    name: "🏥 Whisker Vet Hospital",
+    desc: "Doctor Whisker's Professional Veterinary Clinic. Bring any sick kittens suffering from Flu, Fevers, or Sleepyitis to be cured by our specialized laser diagnostics. Treatment fee is 15 coins.",
+    traffic: "Clear (Special Ambulance lane open)"
   }
 };
 
@@ -4470,6 +4519,14 @@ function initPhoneMapsUI() {
         if (driveBtn) {
           if (locId === 'home') {
             driveBtn.style.display = 'none';
+          } else if (locId === 'vet') {
+            const sickCat = state.data.activeCats.find(c => c.isSick);
+            driveBtn.style.display = 'block';
+            if (sickCat) {
+              driveBtn.textContent = `🏥 Cure ${sickCat.name} (15 🪙)`;
+            } else {
+              driveBtn.textContent = `🏥 Vet Clinic (All cats healthy)`;
+            }
           } else {
             driveBtn.style.display = 'block';
             driveBtn.textContent = `🚗 Joyride to ${locId.toUpperCase()} (+15 Coins Bonus!)`;
@@ -4484,6 +4541,41 @@ const driveJoyrideBtn = document.getElementById('phone-maps-drive-btn');
 if (driveJoyrideBtn) {
   driveJoyrideBtn.addEventListener('click', () => {
     if (!currentMapsSelectedLoc) return;
+    
+    if (currentMapsSelectedLoc === 'vet') {
+      const sickCat = state.data.activeCats.find(c => c.isSick);
+      if (!sickCat) {
+        showToast("Dr. Whisker says: All your cats are healthy and happy! 🐱💚");
+        audio.playPhoneTone(440, 480, 0.08);
+        return;
+      }
+      
+      if (state.data.coins < 15) {
+        showToast("Not enough coins for Dr. Whisker's treatment fee (15 🪙)!");
+        audio.playPhoneTone(400, 440, 0.25);
+        return;
+      }
+      
+      state.data.coins -= 15;
+      sickCat.isSick = false;
+      sickCat.sicknessType = null;
+      state.saveProfiles();
+      
+      if (!audio.muted) {
+        audio.playPhoneTone(440, 880, 0.2);
+        setTimeout(() => {
+          if (!audio.muted) audio.playPhoneTone(880, 1760, 0.25);
+        }, 150);
+      }
+      
+      showToast(`🏥 Success: Dr. Whisker cured ${sickCat.name}! 🩺🐱`);
+      
+      updateHeaderStats();
+      renderRoomScene();
+      updateFocusCatDetailsUI();
+      initPhoneMapsUI();
+      return;
+    }
     
     audio.playPhoneTone(697, 1477, 0.2);
     setTimeout(() => {
