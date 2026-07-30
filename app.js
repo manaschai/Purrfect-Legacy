@@ -993,6 +993,9 @@ class GameState {
       };
     }
     this.saveProfiles();
+    if (typeof syncOrderRecipientsSelects !== 'undefined') {
+      syncOrderRecipientsSelects();
+    }
   }
 
   createProfile(name) {
@@ -3557,6 +3560,9 @@ document.getElementById('driving-finish-btn').addEventListener('click', () => {
 
   state.saveProfiles();
   updateHeaderStats();
+  if (typeof syncOrderRecipientsSelects !== 'undefined') {
+    syncOrderRecipientsSelects();
+  }
   
   showToast(`Successfully brought home your new kittens!`);
   pendingAdoptionState = null;
