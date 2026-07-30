@@ -2211,9 +2211,9 @@ function gameLoopTick() {
 
     // Sickness checks
     if (!cat.isSick && !cat.isVaccinated) {
-      let sickChance = 0.002;
+      let sickChance = 0.0003; // Lower passive chance (0.03% per second) to balance gameplay
       if (cat.hunger < 20 || cat.thirst < 20 || cat.cleanliness < 20) {
-        sickChance = 0.06;
+        sickChance = 0.008; // Lower neglect chance (0.8% per second) so neglect is still risky but not instant
       }
       if (Math.random() < sickChance) {
         const sicknesses = ["Hairball Fever 🤮", "Sneezy Flu 🤧", "Sleepyitis 😴"];
