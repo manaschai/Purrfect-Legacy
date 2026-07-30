@@ -1867,6 +1867,22 @@ function renderRoomScene() {
     }
   }
 
+  // Render physical delivery packages sitting in the room!
+  if (state.data && state.data.activeDeliveries && state.data.activeDeliveries.length > 0) {
+    state.data.activeDeliveries.forEach((del, idx) => {
+      const boxEl = document.createElement('div');
+      boxEl.className = 'room-delivery-box';
+      boxEl.style.cssText = `position: absolute; bottom: 15px; left: ${42 + idx * 14}%; text-align: center; cursor: pointer; animation: slowPulse 2s infinite ease-in-out; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 2px;`;
+      boxEl.innerHTML = `
+        <div style="font-size: 1.4rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));">📦</div>
+        <div style="font-size: 0.48rem; background: rgba(0,0,0,0.6); color: white; padding: 2px 5px; border-radius: 5px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(255,255,255,0.2);">
+          ${del.catName} (${del.timeLeft}s)
+        </div>
+      `;
+      catsArea.appendChild(boxEl);
+    });
+  }
+
   const camView = document.getElementById('phone-view-cam');
   if (camView && camView.style.display === 'flex') {
     updateCameraViewfinder();
