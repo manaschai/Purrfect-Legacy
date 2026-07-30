@@ -6015,7 +6015,9 @@ const APPS_CONFIG = {
   'securitycam': { name: 'Meowgle Cam', icon: '📹', bg: '#607d8b' },
   'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' },
   'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' },
-  'jobs': { name: 'Meow-work', icon: '💼', bg: '#00897b' }
+  'jobs': { name: 'Meow-work', icon: '💼', bg: '#00897b' },
+  'catfit': { name: 'CatFit', icon: '🏃', bg: '#ff5722' },
+  'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' }
 };
 
 const DOWNLOADABLE_APPS = [
