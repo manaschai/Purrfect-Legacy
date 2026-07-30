@@ -6842,12 +6842,14 @@ function updateMeowMallUI() {
   });
 
   updateActiveDeliveriesUI();
+  syncOrderRecipientsSelects();
 }
 
 function updateMeowzonUI() {
   const mzCoins = document.getElementById('phone-meowzon-coins');
   if (mzCoins && state.data) mzCoins.textContent = state.data.coins;
   updateActiveDeliveriesUI();
+  syncOrderRecipientsSelects();
 }
 
 function buyMeowMallItem(itemId, cost, stats, itemName) {
@@ -6862,6 +6864,51 @@ document.querySelectorAll('.meowmall-tab-btn').forEach(btn => {
     initMeowMallUI();
   };
 });
+
+function syncOrderRecipientsSelects() {
+  const mzSelect = document.getElementById('meowzon-recipient-select');
+  const mmSelect = document.getElementById('meowmall-recipient-select');
+  if (!state.data || !state.data.activeCats) return;
+
+  const populate = (selectEl) => {
+    if (!selectEl) return;
+    const oldVal = selectEl.value;
+    selectEl.innerHTML = '';
+    state.data.activeCats.forEach((cat, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${cat.name} (${PERSONALITIES[cat.personality].name})`;
+      if (idx === focusCatIndex) {
+        opt.selected = true;
+      }
+      selectEl.appendChild(opt);
+    });
+    if (oldVal !== '' && parseInt(oldVal) !== focusCatIndex && parseInt(oldVal) < state.data.activeCats.length) {
+      selectEl.value = focusCatIndex;
+    }
+  };
+
+  populate(mzSelect);
+  populate(mmSelect);
+}
+
+// Bind select change handlers
+const mzSelect = document.getElementById('meowzon-recipient-select');
+if (mzSelect) {
+  mzSelect.addEventListener('change', (e) => {
+    focusCatIndex = parseInt(e.target.value);
+    syncOrderRecipientsSelects();
+    updateFocusCatDetailsUI();
+  });
+}
+const mmSelect = document.getElementById('meowmall-recipient-select');
+if (mmSelect) {
+  mmSelect.addEventListener('change', (e) => {
+    focusCatIndex = parseInt(e.target.value);
+    syncOrderRecipientsSelects();
+    updateFocusCatDetailsUI();
+  });
+}
 
 // --- 🚚 SHOP DELIVERY QUEUE SYSTEM ---
 
