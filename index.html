@@ -330,6 +330,7 @@
             <button class="btn secondary-btn" id="open-family-tree-btn">🌳 Family Tree</button>
             <button class="btn secondary-btn" id="open-shop-btn">🛒 Shop</button>
             <button class="btn secondary-btn" id="open-decor-studio-btn" onclick="openDecorStudioModal()">🎨 Room Decor</button>
+            <button class="btn action-btn" id="open-gacha-btn" onclick="openGachaModal()" style="background: linear-gradient(135deg, #ff9800, #ff5722); color: #fff; font-weight: 800; border: none; box-shadow: 0 3px 8px rgba(255,152,0,0.4);">🎰 Gacha</button>
             <button class="btn secondary-btn" id="open-minigame-btn">🎮 Play Game</button>
             <button class="btn icon-btn" id="audio-toggle-btn" title="Toggle Sound">🔊</button>
           </div>
@@ -1712,6 +1713,67 @@
           <div id="quick-season-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
             <!-- Rendered by app.js -->
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🎰 KITTY CAPSULE GACHA MACHINE MODAL -->
+    <div class="modal-overlay" id="gacha-modal">
+      <div class="glass-card modal-content gacha-content" style="max-width: 560px; width: 95%; background: linear-gradient(135deg, #1e1b4b 0%, #311b92 100%); color: white; border-radius: 28px; border: 4px solid #ffb300;">
+        <header class="modal-header" style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+          <h2 style="color: #ffca28; font-family: var(--display-font); font-size: 1.4rem; text-shadow: 0 2px 8px rgba(0,0,0,0.5);">🎰 Kitty Capsule Gacha Studio</h2>
+          <button class="btn close-modal-btn" style="color: white; background: rgba(255,255,255,0.2);">&times;</button>
+        </header>
+        <div class="modal-body gacha-body" style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
+          
+          <!-- Machine Visual Display -->
+          <div class="gacha-machine-card">
+            <div id="gacha-status-banner" style="background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; color: #ffe082; display: inline-block; margin-bottom: 10px;">
+              ✨ 1 Free Daily Spin Available!
+            </div>
+            
+            <div class="gacha-globe" id="gacha-globe-balls">
+              <span class="gacha-ball" style="background: #e91e63;"></span>
+              <span class="gacha-ball" style="background: #9c27b0;"></span>
+              <span class="gacha-ball" style="background: #2196f3;"></span>
+              <span class="gacha-ball" style="background: #4caf50;"></span>
+              <span class="gacha-ball" style="background: #ffeb3b;"></span>
+              <span class="gacha-ball" style="background: #ff9800;"></span>
+              <span class="gacha-ball" style="background: #00bcd4;"></span>
+              <span class="gacha-ball" style="background: linear-gradient(135deg, #ffd700, #ff8f00); box-shadow: 0 0 8px #ffd700;"></span>
+            </div>
+
+            <div class="gacha-crank-knob" id="gacha-crank-btn" onclick="spinGachaCrank()">
+              🔄
+            </div>
+            <div style="font-size: 0.72rem; color: rgba(255,255,255,0.7); margin-top: 2px;">Turn Knob</div>
+
+            <div class="gacha-chute" id="gacha-chute-box">
+              <div id="gacha-dropped-capsule" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- Pull Buttons Row -->
+          <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn" id="gacha-free-btn" onclick="pullGacha('free')" style="background: linear-gradient(135deg, #4caf50, #2e7d32); color: white; padding: 10px 16px; border-radius: 16px; font-weight: 800; font-size: 0.9rem; flex: 1; min-width: 140px; box-shadow: 0 4px 12px rgba(46,125,50,0.4); border: 2px solid #81c784;">
+              🎁 Free Daily Pull
+            </button>
+            <button class="btn" onclick="pullGacha(1)" style="background: linear-gradient(135deg, #2196f3, #1565c0); color: white; padding: 10px 16px; border-radius: 16px; font-weight: 800; font-size: 0.9rem; flex: 1; min-width: 140px; box-shadow: 0 4px 12px rgba(21,101,192,0.4); border: 2px solid #64b5f6;">
+              🎲 Pull 1x (1,000 🪙)
+            </button>
+            <button class="btn" onclick="pullGacha(10)" style="background: linear-gradient(135deg, #ff9800, #e65100); color: white; padding: 10px 16px; border-radius: 16px; font-weight: 800; font-size: 0.9rem; flex: 1; min-width: 140px; box-shadow: 0 4px 12px rgba(230,81,0,0.4); border: 2px solid #ffb74d;">
+              🎰 Pull 10x (9,000 🪙)
+            </button>
+          </div>
+
+          <!-- Odds Info -->
+          <div style="background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 14px; font-size: 0.75rem; text-align: center; color: rgba(255,255,255,0.85); border: 1px solid rgba(255,255,255,0.1);">
+            <strong style="color:#ffd54f;">Drop Rates:</strong> 🌈 Legendary 5% | ✨ Epic 15% | 💎 Rare 30% | 🐾 Common 50%
+          </div>
+
+          <!-- Results Modal / Reveal View -->
+          <div id="gacha-results-area" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;"></div>
+
         </div>
       </div>
     </div>

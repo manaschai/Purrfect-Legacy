@@ -3830,6 +3830,13 @@ function switchPhoneView(viewId) {
     activeView.style.display = 'flex';
   }
 
+  if (viewId === 'gacha') {
+    const phoneModal = document.getElementById('phone-modal');
+    if (phoneModal) phoneModal.classList.remove('active');
+    openGachaModal();
+    return;
+  }
+
   if (viewId === 'lockscreen') {
     updateLockScreenUI();
   }
@@ -6098,6 +6105,7 @@ const APPS_CONFIG = {
   'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' },
   'jobs': { name: 'Meow-work', icon: '💼', bg: '#00897b' },
   'seasonalspecials': { name: 'Specials', icon: '🎆', bg: '#9c27b0' },
+  'gacha': { name: 'Gacha', icon: '🎰', bg: '#ff9800' },
   'catfit': { name: 'CatFit', icon: '🏃', bg: '#ff5722' },
   'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' }
 };
@@ -8836,6 +8844,204 @@ function renderCatWishlistBubbles() {
 
     layer.appendChild(bubble);
   });
+}
+
+// ==========================================
+// 🎰 KITTY CAPSULE GACHA MACHINE SYSTEM MODULE
+// ==========================================
+
+const GACHA_POOL = [
+  // 🌈 LEGENDARY (5%)
+  { id: 'gacha_golden_crown', name: '👑 Royal Golden Crown', rarity: 'legendary', icon: '👑', type: 'wardrobe', desc: 'A dazzling 24k gold crown fit for royal kitty royalty!' },
+  { id: 'gacha_disco_aura', name: '🪩 Disco Ball Light Aura', rarity: 'legendary', icon: '🪩', type: 'decor', desc: 'Adds a glittering rainbow disco lighting effect to your cat room!' },
+  { id: 'gacha_rocket_bed', name: '🚀 Rocket Ship Cat Capsule', rarity: 'legendary', icon: '🚀', type: 'decor', desc: 'A futuristic zero-gravity spaceship sleeping pod for cats!' },
+  { id: 'gacha_galaxy_theme', name: '🌌 Cosmic Galaxy Wall Theme', rarity: 'legendary', icon: '🌌', type: 'decor', desc: 'Unlocks the glittering deep space nebula room wallpaper!' },
+
+  // ✨ EPIC (15%)
+  { id: 'gacha_cyber_shades', name: '🕶️ Cyberpunk Neon Shades', rarity: 'epic', icon: '🕶️', type: 'wardrobe', desc: 'Ultra-cool glowing neon visor sunglasses for stylish kitties.' },
+  { id: 'gacha_ufo_perch', name: '🛸 UFO Floating Cat Perch', rarity: 'epic', icon: '🛸', type: 'decor', desc: 'An antigravity levitating flying saucer cat lounge seat!' },
+  { id: 'gacha_dragon_wings', name: '🐉 Mythical Dragon Wings', rarity: 'epic', icon: '🐉', type: 'wardrobe', desc: 'Majestic purple mythical dragon wings for your cat!' },
+  { id: 'gacha_rainbow_shaved_ice', name: '🍧 Giant Rainbow Shaved Ice', rarity: 'epic', icon: '🍧', type: 'item', desc: 'Delicious icy treat granting +50 Affection & max happiness!' },
+
+  // 💎 RARE (30%)
+  { id: 'gacha_tophat_monocle', name: '🎩 Aristocrat Top Hat & Monocle', rarity: 'rare', icon: '🎩', type: 'wardrobe', desc: 'Distinguished gentleman cat accessory set.' },
+  { id: 'gacha_flower_crown', name: '🌺 Tropical Hibiscus Wreath', rarity: 'rare', icon: '🌺', type: 'wardrobe', desc: 'Fresh blooming island flower crown.' },
+  { id: 'gacha_donut_bed', name: '🍩 Strawberry Glazed Donut Bed', rarity: 'rare', icon: '🍩', type: 'decor', desc: 'Super soft squishy donut plush bed.' },
+  { id: 'gacha_cocoa_fountain', name: '☕ Hot Cocoa Fountain', rarity: 'rare', icon: '☕', type: 'decor', desc: 'Endless hot chocolate fountain for cold winter days.' },
+
+  // 🐾 COMMON (50%)
+  { id: 'gacha_cookie_basket', name: '🍪 Winter Holiday Cookie Basket', rarity: 'common', icon: '🍪', type: 'item', desc: 'Fresh baked festive cat treats.' },
+  { id: 'gacha_cardboard_fort', name: '📦 Cardboard Castle Fort', rarity: 'common', icon: '📦', type: 'decor', desc: 'The ultimate cardboard play castle.' },
+  { id: 'gacha_gourmet_salmon', name: '🐟 Gourmet Wild Salmon Box', rarity: 'common', icon: '🐟', type: 'item', desc: 'Premium salmon snack box for cats.' },
+  { id: 'gacha_golden_catnip', name: '🌿 Ultra Potent Catnip Pouch', rarity: 'common', icon: '🌿', type: 'item', desc: 'Super fun catnip pouch that boosts cat mood.' }
+];
+
+function checkFreeGachaStatus() {
+  if (!state.data) return false;
+  const today = new Date().toDateString();
+  return state.data.lastFreeGachaDate !== today;
+}
+
+function updateGachaUIHeader() {
+  const banner = document.getElementById('gacha-status-banner');
+  const freeBtn = document.getElementById('gacha-free-btn');
+  const hasFree = checkFreeGachaStatus();
+
+  if (banner) {
+    banner.textContent = hasFree ? '✨ 1 Free Daily Spin Available!' : '⏰ Daily Free Pull Used (Resets Tomorrow)';
+    banner.style.background = hasFree ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255, 255, 255, 0.15)';
+    banner.style.color = hasFree ? '#a5d6a7' : '#ffe082';
+  }
+
+  if (freeBtn) {
+    freeBtn.disabled = !hasFree;
+    freeBtn.style.opacity = hasFree ? '1' : '0.5';
+    freeBtn.style.cursor = hasFree ? 'pointer' : 'not-allowed';
+    freeBtn.textContent = hasFree ? '🎁 Free Daily Pull' : '🔒 Free Used Today';
+  }
+}
+
+function openGachaModal() {
+  updateGachaUIHeader();
+  const resultsArea = document.getElementById('gacha-results-area');
+  if (resultsArea) {
+    resultsArea.style.display = 'none';
+    resultsArea.innerHTML = '';
+  }
+  const droppedCap = document.getElementById('gacha-dropped-capsule');
+  if (droppedCap) droppedCap.style.display = 'none';
+
+  const modal = document.getElementById('gacha-modal');
+  if (modal) modal.classList.add('active');
+}
+window.openGachaModal = openGachaModal;
+
+function spinGachaCrank() {
+  const knob = document.getElementById('gacha-crank-btn');
+  if (knob) {
+    knob.classList.remove('spinning');
+    void knob.offsetWidth;
+    knob.classList.add('spinning');
+    if (typeof audio !== 'undefined' && audio.playPhoneTone) audio.playPhoneTone(440, 880, 0.15);
+  }
+}
+window.spinGachaCrank = spinGachaCrank;
+
+function getRandomGachaItem() {
+  const r = Math.random();
+  let rarity = 'common';
+  if (r < 0.05) rarity = 'legendary';
+  else if (r < 0.20) rarity = 'epic';
+  else if (r < 0.50) rarity = 'rare';
+
+  const pool = GACHA_POOL.filter(item => item.rarity === rarity);
+  const selected = pool[Math.floor(Math.random() * pool.length)] || GACHA_POOL[0];
+  return selected;
+}
+
+function deliverGachaPrize(item) {
+  if (!state.data) return;
+
+  if (item.type === 'decor') {
+    if (!state.data.furnitureInventory) state.data.furnitureInventory = [];
+    state.data.furnitureInventory.push(item.id);
+  } else if (item.type === 'wardrobe') {
+    if (!state.data.unlockedAccessories) state.data.unlockedAccessories = [];
+    if (!state.data.unlockedAccessories.includes(item.id)) {
+      state.data.unlockedAccessories.push(item.id);
+    }
+  } else {
+    if (state.data.activeCats && state.data.activeCats.length > 0) {
+      state.data.activeCats.forEach(c => {
+        c.happiness = 100;
+        c.affection = Math.min(100, c.affection + 35);
+      });
+    }
+  }
+  state.saveProfiles();
+}
+
+function pullGacha(count) {
+  if (!state.data) return;
+
+  const isFree = count === 'free';
+  const pullCount = isFree ? 1 : count;
+  const cost = isFree ? 0 : (pullCount === 10 ? 9000 : 1000);
+
+  if (isFree) {
+    if (!checkFreeGachaStatus()) {
+      showToast('❌ Daily free pull already used today!');
+      return;
+    }
+    state.data.lastFreeGachaDate = new Date().toDateString();
+  } else {
+    if (state.data.coins < cost) {
+      showToast(`❌ Not enough coins! Need 🪙 ${cost.toLocaleString()}`);
+      if (typeof audio !== 'undefined' && audio.playPhoneTone) audio.playPhoneTone(300, 300, 0.2);
+      return;
+    }
+    state.data.coins -= cost;
+  }
+
+  spinGachaCrank();
+  updateHeaderStats();
+  updateGachaUIHeader();
+
+  const chute = document.getElementById('gacha-chute-box');
+  const droppedCap = document.getElementById('gacha-dropped-capsule');
+  if (chute && droppedCap) {
+    droppedCap.style.display = 'block';
+    droppedCap.className = 'gacha-capsule-drop';
+    const ballColors = ['#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+    droppedCap.style.background = ballColors[Math.floor(Math.random() * ballColors.length)];
+  }
+
+  setTimeout(() => {
+    const prizes = [];
+    for (let i = 0; i < pullCount; i++) {
+      const prize = getRandomGachaItem();
+      deliverGachaPrize(prize);
+      prizes.push(prize);
+    }
+
+    renderGachaResults(prizes);
+    if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare();
+  }, 650);
+}
+window.pullGacha = pullGacha;
+
+function renderGachaResults(prizes) {
+  const container = document.getElementById('gacha-results-area');
+  if (!container) return;
+
+  container.style.display = 'flex';
+  container.innerHTML = '';
+
+  const title = document.createElement('h3');
+  title.style.cssText = "margin:0 0 5px 0; font-family:var(--display-font); color:#ffca28; text-align:center; font-size:1.1rem;";
+  title.textContent = prizes.length > 1 ? `🎉 10x Capsule Rewards Opened!` : `🎉 Capsule Opened!`;
+  container.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.style.cssText = `display:grid; grid-template-columns:repeat(${prizes.length > 1 ? 2 : 1}, 1fr); gap:10px; max-height:220px; overflow-y:auto; padding:4px;`;
+
+  prizes.forEach(prize => {
+    const card = document.createElement('div');
+    card.className = 'gacha-reveal-card';
+    if (prizes.length > 1) card.style.padding = '10px';
+
+    const rarityClass = `gacha-rarity-${prize.rarity}`;
+    card.innerHTML = `
+      <div class="gacha-rarity-badge ${rarityClass}">${prize.rarity}</div>
+      <div style="font-size: ${prizes.length > 1 ? '1.8rem' : '2.8rem'}; margin: 4px 0;">${prize.icon}</div>
+      <div style="font-weight: 800; font-size: 0.9rem; color: #fff;">${prize.name}</div>
+      <div style="font-size: 0.72rem; color: rgba(255,255,255,0.8); margin-top: 4px;">${prize.desc}</div>
+      <div style="font-size: 0.68rem; font-weight:700; color: #a5d6a7; margin-top: 6px;">✓ Saved to Inventory</div>
+    `;
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
 }
 
 
