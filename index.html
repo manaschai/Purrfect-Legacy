@@ -1122,6 +1122,25 @@
               <div style="font-size: 0.52rem; color:#666; line-height:1.2; padding:0 4px;">
                 💡 <em>Cat-Bank pays out a daily 5% compound interest payout at midnight of every calendar day! Put your extra cash to work.</em>
               </div>
+
+              <!-- Kitty Insurance Panel -->
+              <div style="background: white; border: 1px solid #a5d6a7; border-radius: 10px; padding: 10px; display:flex; flex-direction:column; gap:6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size: 0.65rem; font-weight:bold; color:#1b5e20;">🛡️ Purr-Care Kitty Insurance</span>
+                  <span id="phone-bank-insurance-badge" style="font-size: 0.55rem; background:#ffe0b2; color:#e65100; padding:2px 6px; border-radius:8px; font-weight:bold;">Uninsured</span>
+                </div>
+                <p id="phone-bank-insurance-desc" style="margin:0; font-size:0.55rem; color:#555; line-height:1.2;">
+                  Protects all active cats against health decay (-35% decay rate) & pays daily wellness dividend payouts!
+                </p>
+                <div style="display:flex; gap:6px; margin-top:2px;">
+                  <button id="buy-insurance-basic-btn" onclick="buyKittyInsurance('basic')" class="btn" style="flex:1; font-size: 0.55rem; padding: 6px 0; background:linear-gradient(135deg, #4caf50, #2e7d32); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+                    🛡️ Basic Shield (150 🪙)
+                  </button>
+                  <button id="buy-insurance-vip-btn" onclick="buyKittyInsurance('vip')" class="btn" style="flex:1; font-size: 0.55rem; padding: 6px 0; background:linear-gradient(135deg, #ff9800, #e65100); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+                    👑 Royal VIP (500 🪙)
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- 10. CAT-MAPS APP -->

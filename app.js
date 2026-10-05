@@ -1737,10 +1737,11 @@ function renderFocusCatDetails() {
   const cat = state.data.activeCats[focusCatIndex];
   if (!cat) return;
 
-  const vaccineSuffix = cat.isVaccinated ? ' 🛡️' : '';
+  const insuranceSuffix = (state.data && state.data.kittyInsurance === 'vip') ? ' 👑🛡️' : ((state.data && state.data.kittyInsurance === 'basic') ? ' 🛡️' : '');
+  const vaccineSuffix = cat.isVaccinated ? ' 💉' : '';
   const degreeSuffix = (cat.degrees && cat.degrees.length > 0) ? ` (${cat.degrees.join(', ')})` : '';
-  document.getElementById('focus-cat-name').textContent = cat.name + degreeSuffix + vaccineSuffix;
-  
+  document.getElementById('focus-cat-name').textContent = cat.name + degreeSuffix + vaccineSuffix + insuranceSuffix;
+
   const personalityBadge = document.getElementById('focus-cat-personality');
   personalityBadge.textContent = PERSONALITIES[cat.personality].name;
   personalityBadge.title = PERSONALITIES[cat.personality].desc;
@@ -1819,7 +1820,13 @@ function spawnBathBubble() {
 
 function applySickStylingIfNeeded(wrapper, cat) {
   if (!cat) return;
-  if (cat.isSick) {
+  if (cat.isInjured) {
+    const badge = document.createElement('span');
+    badge.textContent = '🩹';
+    badge.style.cssText = "position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; z-index: 10; animation: float 1.5s ease-in-out infinite;";
+    badge.title = `${cat.name} has a minor injury! Purr-Care insurance covers their recovery!`;
+    wrapper.appendChild(badge);
+  } else if (cat.isSick) {
     const badge = document.createElement('span');
     badge.textContent = cat.sicknessType.includes('Flu') ? '🤧' : (cat.sicknessType.includes('Fever') ? '🤮' : '😴');
     badge.style.cssText = "position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; z-index: 10; animation: float 1.5s ease-in-out infinite;";
@@ -2286,25 +2293,43 @@ function gameLoopTick() {
       showToast(`${cat.name} woke up because they are starving!`);
     }
 
-    // Sickness checks
-    if (!cat.isSick && !cat.isVaccinated) {
+    // Sickness & Injury checks
+    if (!cat.isSick && !cat.isInjured && !cat.isVaccinated) {
       let sickChance = 0.00005; // Super rare passive chance (0.005% per second)
       if (cat.hunger < 20 || cat.thirst < 20 || cat.cleanliness < 20) {
         sickChance = 0.002; // Super rare neglect chance (0.2% per second)
       }
       if (Math.random() < sickChance) {
-        const sicknesses = ["Hairball Fever 🤮", "Sneezy Flu 🤧", "Sleepyitis 😴"];
-        cat.isSick = true;
-        cat.sicknessType = sicknesses[Math.floor(Math.random() * sicknesses.length)];
-        audio.playMeow(0.85); 
-        showToast(`⚠️ Alert: ${cat.name} got sick with ${cat.sicknessType}! Take them to Whisker Vet Clinic. 🏥`);
-        // Trigger screen alert notifications
-        renderRoomScene();
+        const sicknesses = ["Hairball Fever 🤮", "Sneezy Flu 🤧", "Sleepyitis 😴", "Paw Sprain 🩹"];
+        const chosen = sicknesses[Math.floor(Math.random() * sicknesses.length)];
+        
+        if (state.data.kittyInsurance === 'vip') {
+          cat.isSick = false;
+          cat.isInjured = false;
+          cat.sicknessType = null;
+          cat.hunger = Math.max(90, cat.hunger);
+          cat.thirst = Math.max(90, cat.thirst);
+          showToast(`🚑 Purr-Care VIP Vet Claim Approved: Automatically cured & healed ${cat.name}'s ${chosen} for 0 🪙!`);
+        } else {
+          if (chosen.includes('🩹')) {
+            cat.isInjured = true;
+          } else {
+            cat.isSick = true;
+            cat.sicknessType = chosen;
+          }
+          audio.playMeow(0.85); 
+          if (state.data.kittyInsurance === 'basic') {
+            showToast(`⚠️ Alert: ${cat.name} got ${chosen}! Covered 100% by Purr-Care Basic Shield at Dr. Whisker Vet! 🏥`);
+          } else {
+            showToast(`⚠️ Alert: ${cat.name} got ${chosen}! Take them to Whisker Vet Clinic. 🏥`);
+          }
+          renderRoomScene();
+        }
       }
-    } else {
+    } else if (cat.isSick) {
       cat.happy = Math.max(0, (cat.happy || 100) - 1);
       cat.affection = Math.max(0, cat.affection - 0.4);
-      if (cat.sicknessType.includes('Flu') && Math.random() < 0.08) {
+      if (cat.sicknessType && cat.sicknessType.includes('Flu') && Math.random() < 0.08) {
         audio.playPhoneTone(700, 1000, 0.08);
         showToast(`*Achoo!* ${cat.name} sneezed. 🤧`);
       }
@@ -4527,7 +4552,55 @@ function updatePhoneBankUI() {
   const savingsVal = document.getElementById('phone-bank-savings-coins');
   if (walletVal) walletVal.textContent = Math.floor(state.data.coins || 0).toLocaleString();
   if (savingsVal) savingsVal.textContent = Math.floor(state.data.bankSavings || 0).toLocaleString();
+
+  const badge = document.getElementById('phone-bank-insurance-badge');
+  const desc = document.getElementById('phone-bank-insurance-desc');
+  const policy = state.data ? state.data.kittyInsurance : null;
+
+  if (badge && desc) {
+    if (policy === 'vip') {
+      badge.textContent = '👑 Royal VIP Insured';
+      badge.style.background = '#ffe082';
+      badge.style.color = '#e65100';
+      desc.textContent = '👑 Royal VIP Coverage active! -35% stat decay rate, auto vet emergency healing & +30 🪙 daily dividend payout!';
+    } else if (policy === 'basic') {
+      badge.textContent = '🛡️ Basic Shield Active';
+      badge.style.background = '#c8e6c9';
+      badge.style.color = '#1b5e20';
+      desc.textContent = '🛡️ Basic Purr-Care active! -15% stat decay rate & +10 🪙 daily wellness dividend payout!';
+    } else {
+      badge.textContent = '🔒 Uninsured';
+      badge.style.background = '#ffe0b2';
+      badge.style.color = '#e65100';
+      desc.textContent = 'Your kittens are currently uninsured. Purchase a policy to slow hunger & thirst decay rates!';
+    }
+  }
 }
+
+function buyKittyInsurance(tier) {
+  if (!state.data) return;
+
+  const isVip = tier === 'vip';
+  const cost = isVip ? 500 : 150;
+
+  if (state.data.coins < cost) {
+    showToast(`❌ Not enough coins! Need 🪙 ${cost}`);
+    if (typeof audio !== 'undefined' && audio.playPhoneTone) audio.playPhoneTone(300, 300, 0.2);
+    return;
+  }
+
+  state.data.coins -= cost;
+  state.data.kittyInsurance = isVip ? 'vip' : 'basic';
+  state.saveProfiles();
+
+  updateHeaderStats();
+  updatePhoneBankUI();
+  if (typeof renderFocusCatDetails === 'function') renderFocusCatDetails();
+
+  if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare();
+  showToast(`🛡️ ${isVip ? 'Royal VIP' : 'Basic'} Kitty Insurance Activated! All cats are now protected!`);
+}
+window.buyKittyInsurance = buyKittyInsurance;
 
 document.getElementById('phone-bank-deposit-10').addEventListener('click', () => {
   if (state.data.coins < 10) {
@@ -4670,10 +4743,12 @@ function initPhoneMapsUI() {
           if (locId === 'home') {
             driveBtn.style.display = 'none';
           } else if (locId === 'vet') {
-            const sickCat = state.data.activeCats.find(c => c.isSick);
+            const sickCat = state.data.activeCats.find(c => c.isSick || c.isInjured);
             driveBtn.style.display = 'block';
+            const isInsured = state.data.kittyInsurance === 'vip' || state.data.kittyInsurance === 'basic';
+            const feeText = isInsured ? '(0 🪙 Insured Claim)' : '(15 🪙)';
             if (sickCat) {
-              driveBtn.textContent = `🏥 Cure ${sickCat.name} (15 🪙)`;
+              driveBtn.textContent = `🏥 Cure ${sickCat.name} ${feeText}`;
             } else {
               driveBtn.textContent = `🏥 Vet Clinic (All cats healthy)`;
             }
@@ -4693,22 +4768,28 @@ if (driveJoyrideBtn) {
     if (!currentMapsSelectedLoc) return;
     
     if (currentMapsSelectedLoc === 'vet') {
-      const sickCat = state.data.activeCats.find(c => c.isSick);
+      const sickCat = state.data.activeCats.find(c => c.isSick || c.isInjured);
       if (!sickCat) {
-        showToast("Dr. Whisker says: All your cats are healthy and happy! 🐱💚");
+        showToast("Dr. Whisker says: All your cats are healthy, happy & injury-free! 🐱💚");
         audio.playPhoneTone(440, 480, 0.08);
         return;
       }
       
-      if (state.data.coins < 15) {
-        showToast("Not enough coins for Dr. Whisker's treatment fee (15 🪙)!");
+      const isInsured = state.data.kittyInsurance === 'vip' || state.data.kittyInsurance === 'basic';
+      const vetFee = isInsured ? 0 : 15;
+
+      if (state.data.coins < vetFee) {
+        showToast(`Not enough coins for Dr. Whisker's treatment fee (${vetFee} 🪙)!`);
         audio.playPhoneTone(400, 440, 0.25);
         return;
       }
       
-      state.data.coins -= 15;
+      state.data.coins -= vetFee;
       sickCat.isSick = false;
+      sickCat.isInjured = false;
       sickCat.sicknessType = null;
+      sickCat.hunger = Math.max(90, sickCat.hunger);
+      sickCat.thirst = Math.max(90, sickCat.thirst);
       state.saveProfiles();
       
       if (!audio.muted) {
@@ -4718,7 +4799,10 @@ if (driveJoyrideBtn) {
         }, 150);
       }
       
-      showToast(`🏥 Success: Dr. Whisker cured ${sickCat.name}! 🩺🐱`);
+      showToast(isInsured 
+        ? `🏥 Purr-Care Claim Approved: Dr. Whisker cured ${sickCat.name} for 0 🪙! 🩺🐱`
+        : `🏥 Success: Dr. Whisker cured ${sickCat.name} for 15 🪙! 🩺🐱`
+      );
       
       updateHeaderStats();
       renderRoomScene();
@@ -8207,12 +8291,43 @@ function renderInventoryAndLayoutGrid(container) {
   });
 
   if (roomPlaced.length > 0) {
-    const placedSectionHeader = document.createElement('h4');
+    const placedSectionHeader = document.createElement('div');
     placedSectionHeader.style.gridColumn = '1 / -1';
     placedSectionHeader.style.margin = '16px 0 6px 0';
-    placedSectionHeader.style.fontFamily = 'var(--display-font)';
-    placedSectionHeader.style.color = 'var(--text-dark)';
-    placedSectionHeader.textContent = `Currently Placed in ${currentRoom} (${roomPlaced.length} items):`;
+    placedSectionHeader.style.display = 'flex';
+    placedSectionHeader.style.justifyContent = 'space-between';
+    placedSectionHeader.style.alignItems = 'center';
+    placedSectionHeader.style.flexWrap = 'wrap';
+    placedSectionHeader.style.gap = '8px';
+
+    const h4Title = document.createElement('h4');
+    h4Title.style.margin = '0';
+    h4Title.style.fontFamily = 'var(--display-font)';
+    h4Title.style.color = 'var(--text-dark)';
+    h4Title.textContent = `Currently Placed in ${currentRoom} (${roomPlaced.length} items):`;
+
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.className = 'btn secondary-btn';
+    clearAllBtn.style.padding = '4px 10px';
+    clearAllBtn.style.fontSize = '0.75rem';
+    clearAllBtn.style.color = '#c62828';
+    clearAllBtn.textContent = '🗑️ Return All Decor to Inventory';
+
+    clearAllBtn.addEventListener('click', () => {
+      if (confirm(`Return all ${roomPlaced.length} items in ${currentRoom} back to inventory?`)) {
+        roomPlaced.forEach(pItem => {
+          state.data.furnitureInventory.push(pItem.id);
+        });
+        state.data.placedDecorations[currentRoom] = [];
+        state.saveProfiles();
+        renderRoomDecorations();
+        showToast(`↩️ Returned all items in ${currentRoom} to Inventory!`);
+        renderDecorTabContent('inventory');
+      }
+    });
+
+    placedSectionHeader.appendChild(h4Title);
+    placedSectionHeader.appendChild(clearAllBtn);
     grid.appendChild(placedSectionHeader);
 
     roomPlaced.forEach((pItem, pIdx) => {
