@@ -3718,6 +3718,14 @@ document.getElementById('phone-call-btn').addEventListener('click', () => {
   setTimeout(() => {
     if (number === '911') {
       msgDisplay.textContent = 'Emergency Line: "All active staff are occupied treating cat allergies. Please clean the room and groom your kittens!"';
+    } else if (number === '777' || number === '888' || number === '7777') {
+      msgDisplay.textContent = '🎰 Gacha Company Hotline: "Welcome VIP! Here is your Gacha Ticket Bonus (+500 Coins)! Happy spinning!"';
+      if (state.data) {
+        state.data.coins = Math.min(999999, state.data.coins + 500);
+        state.saveProfiles();
+        updateHeaderStats();
+        showToast('🎰 Gacha Company Hotline granted 500 Coins Bonus!');
+      }
     } else if (number === '6369' || number === '228') {
       msgDisplay.textContent = 'Secret Council: "Meow! You dialed the Cat Council. The secrets of the universe lay in grooming your cats regularly. Cleanliness prevents allergy sneezes!"';
     } else {
@@ -5931,6 +5939,7 @@ const RANDOM_CALLERS = [
   { name: "🎓 Academy Dean", avatar: "🎓", dialogue: "Hello! Just calling to congratulate you on your cat's study progress. They are show-stopping students! Keep up the enrollment!", rewardCoins: 0 },
   { name: "🐱 Luna's Grandma", avatar: "👵", dialogue: "Hello dear! Luna's grandmother here. I knitted a tiny mouse toy for the kittens! Make sure they sleep well and stay warm. Sending you 10 Cat Coins!", rewardCoins: 10 },
   { name: "👑 Wealthy Sponsor", avatar: "👑", dialogue: "Greetings! I sponsor modern cat homes worldwide. Your cat care is stellar! Here is a micro-grant of 25 Cat Coins to decorate your rooms!", rewardCoins: 25 },
+  { name: "🎰 Gacha Company", avatar: "🎰", dialogue: "Hello Sir! This is the Kitty Capsule Gacha Company calling! As a valued Cat VIP, we are delivering a Gacha Ticket Grant of 500 Cat Coins to your account! Spin the Gacha Machine to win legendary prizes!", rewardCoins: 500 },
   { name: "🐈 Stray Cat Bob", avatar: "🐱", dialogue: "Mew... I am a local stray cat looking for friends. Your home looks so beautiful and welcoming! *purrs softly*", rewardCoins: 0 },
   { name: "🛸 Alien Cat", avatar: "🛸", dialogue: "Meow-zorp! Hello human of Earth. We are monitoring your cat's cuteness levels. They have exceeded the galaxy threshold! Zorp!", rewardCoins: 0 }
 ];
@@ -9043,6 +9052,19 @@ function renderGachaResults(prizes) {
 
   container.appendChild(grid);
 }
+
+function triggerGachaCompanyCall() {
+  const gachaCaller = {
+    name: "🎰 Gacha Company",
+    avatar: "🎰",
+    dialogue: "Hello Sir! This is the Kitty Capsule Gacha Company calling! As a valued Cat VIP, we are delivering a Gacha Ticket Grant of 500 Cat Coins to your account! Spin the Gacha Machine to win legendary prizes!",
+    rewardCoins: 500
+  };
+  activeIncomingCaller = gachaCaller;
+  startPhoneRingingSound();
+  showIncomingCallNotification(gachaCaller);
+}
+window.triggerGachaCompanyCall = triggerGachaCompanyCall;
 
 
 

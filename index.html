@@ -1728,8 +1728,13 @@
           
           <!-- Machine Visual Display -->
           <div class="gacha-machine-card">
-            <div id="gacha-status-banner" style="background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; color: #ffe082; display: inline-block; margin-bottom: 10px;">
-              ✨ 1 Free Daily Spin Available!
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+              <div id="gacha-status-banner" style="background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; color: #ffe082;">
+                ✨ 1 Free Daily Spin Available!
+              </div>
+              <button class="btn" onclick="triggerGachaCompanyCall()" style="background: linear-gradient(135deg, #ab47bc, #7b1fa2); color: white; border: 1px solid #e1bee7; padding: 4px 10px; border-radius: 14px; font-size: 0.72rem; font-weight: 800; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                📞 Call Gacha Company (777)
+              </button>
             </div>
             
             <div class="gacha-globe" id="gacha-globe-balls">
