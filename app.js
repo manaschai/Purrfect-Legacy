@@ -966,6 +966,38 @@ class GameState {
           scheduledDay: null
         };
       }
+
+      if (!this.data.craftingMaterials) {
+        this.data.craftingMaterials = { yarn: 5, cardboard: 5, wood: 5, catnip: 3 };
+      }
+      if (!this.data.furnitureInventory) {
+        this.data.furnitureInventory = ['cat_tree_deluxe', 'scratching_post_cozy'];
+      }
+      if (!this.data.placedDecorations) {
+        this.data.placedDecorations = {
+          'living-room': [
+            { id: 'cat_tree_deluxe', x: 68, y: 52 },
+            { id: 'scratching_post_cozy', x: 18, y: 62 }
+          ],
+          'phone-room': [
+            { id: 'plush_mouse_tower', x: 82, y: 58 }
+          ]
+        };
+      }
+      if (!this.data.roomThemes) {
+        this.data.roomThemes = {
+          'living-room': 'default',
+          'phone-room': 'default'
+        };
+      }
+
+      // Sanitize exponential/overflow money bug
+      if (typeof this.data.coins !== 'number' || !Number.isFinite(this.data.coins) || this.data.coins > 99999999) {
+        this.data.coins = 99999;
+      }
+      if (typeof this.data.bankSavings !== 'number' || !Number.isFinite(this.data.bankSavings) || this.data.bankSavings > 999999) {
+        this.data.bankSavings = 25000;
+      }
       
       // Calculate offline progress
       this.calculateOfflineProgress();
@@ -989,7 +1021,22 @@ class GameState {
         phoneWallpaper: 'blue',
         bankSavings: 0,
         tvChannel: 0,
-        furniture: { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' }
+        furniture: { bed: 'royal', rug: 'cozy', lamp: 'cute', lights: 'warm', shelf: 'salmon', wallpaper: 'plain', window: 'sunny' },
+        craftingMaterials: { yarn: 5, cardboard: 5, wood: 5, catnip: 3 },
+        furnitureInventory: ['cat_tree_deluxe', 'scratching_post_cozy'],
+        placedDecorations: {
+          'living-room': [
+            { id: 'cat_tree_deluxe', x: 68, y: 52 },
+            { id: 'scratching_post_cozy', x: 18, y: 62 }
+          ],
+          'phone-room': [
+            { id: 'plush_mouse_tower', x: 82, y: 58 }
+          ]
+        },
+        roomThemes: {
+          'living-room': 'default',
+          'phone-room': 'default'
+        }
       };
     }
     this.saveProfiles();
@@ -1637,14 +1684,20 @@ function initGameScreen() {
 let lastKnownCoins = null;
 function updateHeaderStats() {
   if (state.data) {
+    // Sanitize overflow if present at runtime
+    if (typeof state.data.coins !== 'number' || !Number.isFinite(state.data.coins) || state.data.coins > 99999999) {
+      state.data.coins = 99999;
+    }
     if (lastKnownCoins !== null && state.data.coins > lastKnownCoins) {
       const diff = state.data.coins - lastKnownCoins;
       updateVacationQuestProgress('earn_coins', diff);
     }
     lastKnownCoins = state.data.coins;
   }
-  document.getElementById('header-coins').textContent = state.data.coins;
-  document.getElementById('shop-coins-count').textContent = state.data.coins;
+  const formattedCoins = Math.floor(state.data.coins || 0).toLocaleString();
+  document.getElementById('header-coins').textContent = formattedCoins;
+  const shopCoins = document.getElementById('shop-coins-count');
+  if (shopCoins) shopCoins.textContent = formattedCoins;
   document.getElementById('header-trust').textContent = state.data.trustLevel;
   
   const display = document.getElementById('header-date-display');
@@ -1968,6 +2021,8 @@ function switchRoom(roomName) {
 
   updateBedroomFurnitureUI();
   renderRoomScene();
+  if (typeof applyRoomTheme === 'function') applyRoomTheme(roomName);
+  if (typeof renderRoomDecorations === 'function') renderRoomDecorations();
 }
 
 function updatePhoneRoomButtons() {
@@ -2073,14 +2128,17 @@ function gameLoopTick() {
       generateMonthlyVacationQuest();
     }
     
-    // Cat-Bank Daily 5% Interest Compounder
+    // Cat-Bank Daily 5% Interest Compounder (Capped to prevent exponential overflow)
     if (state.data.bankSavings && state.data.bankSavings > 0) {
-      const interest = Math.floor(state.data.bankSavings * 0.05);
-      if (interest > 0) {
-        state.data.bankSavings += interest;
-        setTimeout(() => {
-          showToast(`💵 Bank Interest: You earned 🪙 ${interest} Cat Coins in interest!`);
-        }, 2200);
+      const MAX_SAVINGS = 999999;
+      if (state.data.bankSavings < MAX_SAVINGS) {
+        const interest = Math.min(500, Math.floor(state.data.bankSavings * 0.05));
+        if (interest > 0) {
+          state.data.bankSavings = Math.min(MAX_SAVINGS, state.data.bankSavings + interest);
+          setTimeout(() => {
+            showToast(`💵 Bank Interest: You earned 🪙 ${interest} Cat Coins in interest!`);
+          }, 2200);
+        }
       }
     }
     
@@ -2540,6 +2598,10 @@ function triggerInteraction(action, catIndex = focusCatIndex, clientX = null, cl
       });
       showToast('Scooped the litter box! Cleanliness increased for all active cats.');
       break;
+  }
+
+  if (Math.random() < 0.35 && typeof awardRandomCraftingMaterial === 'function') {
+    awardRandomCraftingMaterial();
   }
 
   state.saveProfiles();
@@ -3846,6 +3908,8 @@ function switchPhoneView(viewId) {
     initRingMakerUI();
   } else if (viewId === 'meowmall') {
     initMeowMallUI();
+  } else if (viewId === 'seasonalspecials') {
+    initSeasonalSpecialsAppUI();
   } else if (viewId === 'jobs') {
     initJobsUI();
   }
@@ -4059,6 +4123,7 @@ function loadBrowserUrl(url) {
         </div>
         <div style="display:flex; flex-direction:column; gap:8px; text-align:left; padding: 5px;">
           <strong style="font-size:0.6rem; color:#70757a; text-transform:uppercase;">Trending Websites:</strong>
+          <a href="#" class="browser-link" data-url="www.blossommarket.com" style="color:#e91e63; text-decoration:none; font-weight:bold;">🎆 Seasonal Specials: Flowers, Ice Cream, Syrup & Gifts</a>
           <a href="#" class="browser-link" data-url="www.meowpedia.org/cardboard" style="color:#1a0dab; text-decoration:none; font-weight:bold;">📦 Meowpedia: Box Physics</a>
           <a href="#" class="browser-link" data-url="www.cattube.com/birds" style="color:#1a0dab; text-decoration:none; font-weight:bold;">📺 Cat-Tube: Live Birds</a>
           <a href="#" class="browser-link" data-url="www.clawnews.net/rodents" style="color:#1a0dab; text-decoration:none; font-weight:bold;">📰 Claw-News: Garden Mouse Alert</a>
@@ -4121,6 +4186,22 @@ function loadBrowserUrl(url) {
         <a href="#" class="browser-link" data-url="www.meowgle.com" style="color:#0066cc; text-decoration:none; font-weight:bold;">← Back to Meowgle</a>
       </div>
     `;
+  } else if (url === 'www.blossommarket.com' || url === 'www.seasonalspecials.cat') {
+    browserContent.innerHTML = `
+      <div style="text-align:center; padding: 4px;">
+        <h3 style="color:#8e24aa; font-family:var(--display-font); margin:0 0 4px 0;">🎆 Seasonal Specials Web</h3>
+        <p style="font-size:0.6rem; color:#555; margin-bottom:8px;">Browse Spring Flowers 🌸, Summer Ice Cream 🍧, Autumn Maple Syrup 🍁, and Winter Wishlist Gifts 🎁!</p>
+        <button id="open-app-from-browser-btn" class="btn primary-btn" style="width:100%; padding:8px; font-size:0.75rem; background:#8e24aa; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+          📱 Open Seasonal Specials App
+        </button>
+      </div>
+    `;
+    const openBtn = document.getElementById('open-app-from-browser-btn');
+    if (openBtn) {
+      openBtn.onclick = () => {
+        switchPhoneView('seasonalspecials');
+      };
+    }
   } else {
     browserContent.innerHTML = `
       <div style="text-align:left;">
@@ -4407,8 +4488,8 @@ document.querySelectorAll('.ringtone-btn').forEach(btn => {
 function updatePhoneBankUI() {
   const walletVal = document.getElementById('phone-bank-wallet-coins');
   const savingsVal = document.getElementById('phone-bank-savings-coins');
-  if (walletVal) walletVal.textContent = state.data.coins;
-  if (savingsVal) savingsVal.textContent = state.data.bankSavings || 0;
+  if (walletVal) walletVal.textContent = Math.floor(state.data.coins || 0).toLocaleString();
+  if (savingsVal) savingsVal.textContent = Math.floor(state.data.bankSavings || 0).toLocaleString();
 }
 
 document.getElementById('phone-bank-deposit-10').addEventListener('click', () => {
@@ -6016,6 +6097,7 @@ const APPS_CONFIG = {
   'ringmaker': { name: 'Meow-lody Maker', icon: '🎹', bg: '#d81b60' },
   'meowmall': { name: 'Meow-Mall', icon: '🛍️', bg: '#f57f17' },
   'jobs': { name: 'Meow-work', icon: '💼', bg: '#00897b' },
+  'seasonalspecials': { name: 'Specials', icon: '🎆', bg: '#9c27b0' },
   'catfit': { name: 'CatFit', icon: '🏃', bg: '#ff5722' },
   'cattitude': { name: 'Cattitude', icon: '📸', bg: '#e91e63' }
 };
@@ -6036,7 +6118,7 @@ function renderPhoneHomeScreen() {
   if (!grid || !state.data) return;
   
   if (!state.data.installedApps) {
-    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'seasonalspecials', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
   }
   
   grid.innerHTML = '';
@@ -7202,6 +7284,8 @@ window.onload = () => {
     setInterval(updateWallClock, 1000);
     setInterval(tickDeliveries, 1000);
     setInterval(tickWorkingCats, 1000);
+    if (typeof applyRoomTheme === 'function') applyRoomTheme(currentRoom);
+    if (typeof renderRoomDecorations === 'function') renderRoomDecorations();
     if (state.data.activeCats.length === 0) {
       Views.switch('breeding-screen');
     } else {
@@ -7212,3 +7296,1541 @@ window.onload = () => {
     Views.switch('profile-screen');
   }
 };
+
+// ==========================================
+// 🎨 CAT ROOM DECOR STUDIO & FURNITURE CRAFTING MODULE
+// ==========================================
+
+const FURNITURE_CATALOG = [
+  {
+    id: 'cat_tree_deluxe',
+    name: 'Deluxe Multi-Tier Cat Tree',
+    category: 'cat_tree',
+    icon: '🌳',
+    desc: 'Multi-level cozy plush cat tree with scratching posts and sleeping hammock.',
+    cost: 120,
+    width: 90,
+    height: 120,
+    svg: `<svg viewBox="0 0 100 130" width="90" height="120">
+      <rect x="15" y="115" width="70" height="10" rx="3" fill="#8d6e63" />
+      <rect x="42" y="30" width="16" height="85" fill="#a1887f" stroke="#4e342e" stroke-width="2" />
+      <line x1="42" y1="40" x2="58" y2="40" stroke="#795548" stroke-width="2" />
+      <line x1="42" y1="60" x2="58" y2="60" stroke="#795548" stroke-width="2" />
+      <line x1="42" y1="80" x2="58" y2="80" stroke="#795548" stroke-width="2" />
+      <rect x="20" y="85" width="60" height="12" rx="4" fill="#ffb74d" stroke="#e65100" stroke-width="2" />
+      <rect x="25" y="50" width="50" height="35" rx="6" fill="#81c784" stroke="#2e7d32" stroke-width="2" />
+      <circle cx="50" cy="68" r="12" fill="#2e7d32" />
+      <rect x="10" y="20" width="80" height="14" rx="5" fill="#ff80ab" stroke="#c2185b" stroke-width="2" />
+      <circle cx="20" cy="40" r="5" fill="#ffd54f" />
+      <line x1="20" y1="34" x2="20" y2="40" stroke="#ff80ab" stroke-width="1.5" />
+    </svg>`,
+    interactionMsg: '🐾 Cats love climbing up the Deluxe Cat Tree to nap!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'scratching_post_cozy',
+    name: 'Cozy Sisal Scratching Post',
+    category: 'scratching',
+    icon: '🪵',
+    desc: 'Durable sisal post with a fun dangling mouse toy.',
+    cost: 50,
+    width: 60,
+    height: 80,
+    svg: `<svg viewBox="0 0 70 90" width="60" height="80">
+      <ellipse cx="35" cy="80" rx="30" ry="8" fill="#8d6e63" stroke="#4e342e" stroke-width="2" />
+      <rect x="27" y="20" width="16" height="60" rx="2" fill="#d7ccc8" stroke="#5d4037" stroke-width="2" />
+      <path d="M 27,30 L 43,30 M 27,40 L 43,40 M 27,50 L 43,50 M 27,60 L 43,60 M 27,70 L 43,70" stroke="#8d6e63" stroke-width="2" />
+      <circle cx="35" cy="15" r="10" fill="#ff80ab" stroke="#c2185b" stroke-width="2" />
+      <line x1="50" y1="15" x2="55" y2="35" stroke="#795548" stroke-width="1.5" />
+      <ellipse cx="56" cy="38" rx="4" ry="6" fill="#9e9e9e" />
+    </svg>`,
+    interactionMsg: '😼 *Scratch scratch scratch!* Claw health restored!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playMeow) audio.playMeow(); }
+  },
+  {
+    id: 'aquarium_luxury',
+    name: 'Glowing Fish Aquarium',
+    category: 'aquarium',
+    icon: '🐠',
+    desc: 'Luminous LED aquarium tank with colorful swimming neon fish.',
+    cost: 160,
+    width: 90,
+    height: 70,
+    extraClass: 'aquarium-fish-swim',
+    svg: `<svg viewBox="0 0 100 80" width="90" height="70">
+      <rect x="5" y="10" width="90" height="60" rx="8" fill="#e0f7fa" stroke="#00838f" stroke-width="3" />
+      <rect x="8" y="13" width="84" height="54" rx="6" fill="#4dd0e1" opacity="0.8" />
+      <path d="M 8,55 Q 30,50 50,57 T 92,55 L 92,67 L 8,67 Z" fill="#ffe0b2" />
+      <path d="M 18,58 Q 14,40 22,25" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linecap="round" />
+      <path d="M 24,58 Q 28,45 22,30" fill="none" stroke="#4caf50" stroke-width="2" stroke-linecap="round" />
+      <g class="aquarium-fish-swim">
+        <polygon points="65,30 75,25 75,35" fill="#ff4081" />
+        <ellipse cx="60" cy="30" rx="7" ry="5" fill="#ff4081" />
+        <circle cx="58" cy="28" r="1" fill="#fff" />
+        <polygon points="35,42 25,38 25,46" fill="#ffd54f" />
+        <ellipse cx="40" cy="42" rx="6" ry="4" fill="#ffd54f" />
+      </g>
+      <circle cx="30" cy="20" r="2" fill="rgba(255,255,255,0.7)" />
+      <circle cx="32" cy="35" r="1.5" fill="rgba(255,255,255,0.7)" />
+      <circle cx="70" cy="22" r="2.5" fill="rgba(255,255,255,0.7)" />
+    </svg>`,
+    interactionMsg: '🐟 Cats are mesmerized watching the glowing fish swim!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playWaterBubble) audio.playWaterBubble(); }
+  },
+  {
+    id: 'disco_ball_party',
+    name: 'Rainbow Disco Party Ball',
+    category: 'lighting',
+    icon: '🪩',
+    desc: 'Hanging disco sphere with multi-colored reflective sparkles.',
+    cost: 180,
+    width: 65,
+    height: 75,
+    extraClass: 'disco-ball-spin',
+    svg: `<svg viewBox="0 0 70 80" width="65" height="75">
+      <line x1="35" y1="0" x2="35" y2="25" stroke="#9e9e9e" stroke-width="2" />
+      <circle cx="35" cy="50" r="24" fill="#eceff1" stroke="#455a64" stroke-width="2" />
+      <path d="M 15,50 Q 35,30 55,50 Q 35,70 15,50" fill="none" stroke="#78909c" stroke-width="1.5" />
+      <line x1="11" y1="50" x2="59" y2="50" stroke="#78909c" stroke-width="1.5" />
+      <line x1="35" y1="26" x2="35" y2="74" stroke="#78909c" stroke-width="1.5" />
+      <circle cx="28" cy="42" r="3" fill="#ff4081" />
+      <circle cx="42" cy="45" r="3" fill="#00e676" />
+      <circle cx="35" cy="58" r="3" fill="#7c4dff" />
+      <circle cx="25" cy="56" r="2" fill="#ffd54f" />
+    </svg>`,
+    interactionMsg: '🪩 Party time! Disco lights illuminate the room!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare(); }
+  },
+  {
+    id: 'neon_paw_sign',
+    name: 'Cyberpunk Neon Paw Sign',
+    category: 'decor',
+    icon: '🐾',
+    desc: 'Vibrant neon wall sign with pulsating cyan and magenta glow.',
+    cost: 150,
+    width: 70,
+    height: 65,
+    extraClass: 'neon-glow-pulse',
+    svg: `<svg viewBox="0 0 80 75" width="70" height="65">
+      <path d="M 40,35 C 20,35 15,65 40,65 C 65,65 60,35 40,35 Z" fill="none" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" />
+      <circle cx="20" cy="25" r="7" fill="none" stroke="#ff4081" stroke-width="3" />
+      <circle cx="34" cy="18" r="7" fill="none" stroke="#ff4081" stroke-width="3" />
+      <circle cx="48" cy="18" r="7" fill="none" stroke="#ff4081" stroke-width="3" />
+      <circle cx="62" cy="25" r="7" fill="none" stroke="#ff4081" stroke-width="3" />
+    </svg>`,
+    interactionMsg: '✨ Cyberpunk Neon Paw Sign switched on!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPhoneTone) audio.playPhoneTone(880, 1200, 0.15); }
+  },
+  {
+    id: 'cat_fountain_royal',
+    name: 'Royal Ceramic Cat Fountain',
+    category: 'water',
+    icon: '⛲',
+    desc: 'Continuously flowing fresh water fountain with bubbling fountain tier.',
+    cost: 130,
+    width: 65,
+    height: 65,
+    svg: `<svg viewBox="0 0 80 80" width="65" height="65">
+      <ellipse cx="40" cy="65" rx="35" ry="12" fill="#80deea" stroke="#00838f" stroke-width="3" />
+      <ellipse cx="40" cy="48" rx="22" ry="8" fill="#e0f7fa" stroke="#00838f" stroke-width="2" />
+      <path d="M 36,48 Q 40,25 44,48" fill="none" stroke="#00b0ff" stroke-width="3" stroke-linecap="round" />
+      <circle cx="40" cy="25" r="4" fill="#80d8ff" class="fountain-ripple" />
+    </svg>`,
+    interactionMsg: '🌊 Cats take a refreshing sip of cool purified water!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playDrinkSound) audio.playDrinkSound(); }
+  },
+  {
+    id: 'cardboard_castle',
+    name: 'Epic Cardboard Castle Fort',
+    category: 'bed',
+    icon: '🏰',
+    desc: 'Multi-box cardboard fortress with cat paw windows and turrets.',
+    cost: 75,
+    width: 85,
+    height: 75,
+    svg: `<svg viewBox="0 0 100 90" width="85" height="75">
+      <rect x="15" y="30" width="70" height="55" fill="#d7ccc8" stroke="#5d4037" stroke-width="3" rx="4" />
+      <rect x="15" y="20" width="14" height="15" fill="#bcaaa4" stroke="#5d4037" stroke-width="2" />
+      <rect x="43" y="20" width="14" height="15" fill="#bcaaa4" stroke="#5d4037" stroke-width="2" />
+      <rect x="71" y="20" width="14" height="15" fill="#bcaaa4" stroke="#5d4037" stroke-width="2" />
+      <path d="M 38,85 L 38,55 A 12,12 0 0,1 62,55 L 62,85 Z" fill="#3e2723" />
+      <circle cx="28" cy="45" r="4" fill="#3e2723" />
+      <circle cx="72" cy="45" r="4" fill="#3e2723" />
+      <text x="50" y="42" font-size="8" font-family="sans-serif" font-weight="bold" fill="#8d6e63" text-anchor="middle">📦 FORT</text>
+    </svg>`,
+    interactionMsg: '📦 Cats hide inside their cardboard fortress!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playMeow) audio.playMeow(); }
+  },
+  {
+    id: 'plush_mouse_tower',
+    name: 'Hanging Plush Mouse Tower',
+    category: 'toy',
+    icon: '🐭',
+    desc: 'Tower with multiple dangling elastic plush mice for active cats.',
+    cost: 60,
+    width: 55,
+    height: 85,
+    svg: `<svg viewBox="0 0 60 90" width="55" height="85">
+      <line x1="30" y1="0" x2="30" y2="85" stroke="#795548" stroke-width="4" />
+      <ellipse cx="30" cy="85" rx="22" ry="5" fill="#5d4037" />
+      <line x1="30" y1="20" x2="10" y2="35" stroke="#8d6e63" stroke-width="2" />
+      <line x1="30" y1="45" x2="50" y2="60" stroke="#8d6e63" stroke-width="2" />
+      <circle cx="8" cy="38" r="6" fill="#e0e0e0" stroke="#424242" stroke-width="1.5" />
+      <circle cx="52" cy="63" r="6" fill="#ff80ab" stroke="#c2185b" stroke-width="1.5" />
+    </svg>`,
+    interactionMsg: '🐾 *Whack!* Cats bat the plush mice back and forth!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playToySound) audio.playToySound(); }
+  },
+  {
+    id: 'cozy_fireplace',
+    name: 'Mini Hearth Fireplace',
+    category: 'warmth',
+    icon: '🔥',
+    desc: 'Cozy brick fireplace with realistic flickering hearth glow.',
+    cost: 200,
+    width: 80,
+    height: 80,
+    svg: `<svg viewBox="0 0 90 90" width="80" height="80">
+      <rect x="10" y="10" width="70" height="75" rx="6" fill="#8d6e63" stroke="#3e2723" stroke-width="3" />
+      <rect x="18" y="30" width="54" height="48" rx="4" fill="#212121" stroke="#3e2723" stroke-width="2" />
+      <path d="M 45,70 Q 35,65 40,50 Q 45,40 45,35 Q 50,45 53,55 Q 55,65 45,70 Z" fill="#ff3d00" />
+      <path d="M 45,70 Q 38,65 42,55 Q 45,48 45,43 Q 48,50 50,58 Q 51,65 45,70 Z" fill="#ffea00" />
+      <rect x="5" y="5" width="80" height="10" rx="3" fill="#5d4037" stroke="#3e2723" stroke-width="2" />
+    </svg>`,
+    interactionMsg: '🔥 Warm hearth crackles! Cats curl up in cozy warmth.',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'cat_bed_donut',
+    name: 'Velvet Donut Plush Bed',
+    category: 'bed',
+    icon: '🍩',
+    desc: 'Ultra-soft self-warming donut cushion bed.',
+    cost: 80,
+    width: 70,
+    height: 50,
+    svg: `<svg viewBox="0 0 80 60" width="70" height="50">
+      <ellipse cx="40" cy="35" rx="35" ry="20" fill="#f48fb1" stroke="#c2185b" stroke-width="3" />
+      <ellipse cx="40" cy="33" rx="22" ry="11" fill="#f8bbd0" />
+      <ellipse cx="40" cy="34" rx="14" ry="7" fill="#fce4ec" />
+    </svg>`,
+    interactionMsg: '🍩 Cats sink into the velvety soft donut bed for a sweet dream!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playSleepSnore) audio.playSleepSnore(); }
+  },
+  {
+    id: 'sakura_blossom_tree',
+    name: 'Spring Sakura Blossom Tree',
+    category: 'seasonal',
+    icon: '🌸',
+    desc: 'Cozy potted cherry blossom tree shedding pink sakura petals.',
+    cost: 110,
+    width: 75,
+    height: 100,
+    svg: `<svg viewBox="0 0 80 100" width="75" height="100">
+      <ellipse cx="40" cy="90" rx="20" ry="6" fill="#8d6e63" stroke="#4e342e" stroke-width="2" />
+      <path d="M 40,90 C 35,60 45,45 38,25 M 39,55 C 50,45 55,35 60,30 M 39,40 C 25,30 20,25 15,20" fill="none" stroke="#5d4037" stroke-width="4" stroke-linecap="round" />
+      <!-- Sakura Canopies -->
+      <circle cx="38" cy="22" r="18" fill="#f8bbd0" opacity="0.9" />
+      <circle cx="30" cy="28" r="14" fill="#f48fb1" opacity="0.85" />
+      <circle cx="58" cy="28" r="16" fill="#ff80ab" opacity="0.9" />
+      <circle cx="16" cy="20" r="12" fill="#f8bbd0" opacity="0.85" />
+    </svg>`,
+    interactionMsg: '🌸 Falling Sakura petals bring peace and calm to your cats!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'jack_o_lantern_spooky',
+    name: 'Glowing Jack-O-Lantern',
+    category: 'seasonal',
+    icon: '🎃',
+    desc: 'Carved pumpkin lantern emitting an eerie orange glow.',
+    cost: 95,
+    width: 65,
+    height: 65,
+    extraClass: 'neon-glow-pulse',
+    svg: `<svg viewBox="0 0 70 70" width="65" height="65">
+      <path d="M 35,12 Q 33,5 37,2 Q 40,2 38,12" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linecap="round" />
+      <ellipse cx="35" cy="40" rx="30" ry="24" fill="#ff6d00" stroke="#e65100" stroke-width="2" />
+      <!-- Face -->
+      <polygon points="23,32 17,40 29,40" fill="#ffe082" />
+      <polygon points="47,32 41,40 53,40" fill="#ffe082" />
+      <polygon points="35,38 31,44 39,44" fill="#ffe082" />
+      <path d="M 20,50 L 25,56 L 30,50 L 35,56 L 40,50 L 45,56 L 50,50 Z" fill="#ffe082" />
+    </svg>`,
+    interactionMsg: '🎃 Spooky Jack-O\'-Lantern crackles with Halloween magic!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playMeow) audio.playMeow(); }
+  },
+  {
+    id: 'holiday_christmas_tree',
+    name: 'Festive Holiday Pine Tree',
+    category: 'seasonal',
+    icon: '🎄',
+    desc: 'Decorated evergreen pine tree with glowing star top and ornaments.',
+    cost: 160,
+    width: 85,
+    height: 110,
+    svg: `<svg viewBox="0 0 90 120" width="85" height="110">
+      <rect x="38" y="95" width="14" height="20" fill="#5d4037" rx="2" />
+      <polygon points="45,15 15,60 30,60 10,95 80,95 60,60 75,60" fill="#2e7d32" stroke="#1b5e20" stroke-width="2" />
+      <!-- Star -->
+      <polygon points="45,5 48,12 55,12 50,16 52,23 45,18 38,23 40,16 35,12 42,12" fill="#ffd54f" />
+      <!-- Ornaments -->
+      <circle cx="35" cy="45" r="4" fill="#ff4081" />
+      <circle cx="55" cy="50" r="4" fill="#00e676" />
+      <circle cx="28" cy="75" r="4" fill="#00b0ff" />
+      <circle cx="62" cy="78" r="4" fill="#ffd54f" />
+      <circle cx="45" cy="85" r="4" fill="#ff4081" />
+    </svg>`,
+    interactionMsg: '🎄 Festive holiday cheer fills the room! Cats purr under the tree.',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare(); }
+  }
+];
+
+const CRAFTING_RECIPES = [
+  {
+    id: 'cardboard_castle',
+    name: 'Epic Cardboard Castle Fort 🏰',
+    furnitureId: 'cardboard_castle',
+    materials: { cardboard: 4, yarn: 2 },
+    coins: 50,
+    desc: 'Craft a modular castle for your kittens using spare boxes & yarn!'
+  },
+  {
+    id: 'scratching_post_cozy',
+    name: 'Cozy Sisal Scratching Post 🪵',
+    furnitureId: 'scratching_post_cozy',
+    materials: { wood: 3, yarn: 2 },
+    coins: 40,
+    desc: 'Wrap wood posts with yarn for the ultimate scratching tower.'
+  },
+  {
+    id: 'cat_tree_deluxe',
+    name: 'Deluxe Multi-Tier Cat Tree 🌳',
+    furnitureId: 'cat_tree_deluxe',
+    materials: { wood: 5, yarn: 3 },
+    coins: 100,
+    desc: 'Combine sturdy wood structure with plush yarn platforms.'
+  },
+  {
+    id: 'cat_fountain_royal',
+    name: 'Royal Ceramic Cat Fountain ⛲',
+    furnitureId: 'cat_fountain_royal',
+    materials: { wood: 3, catnip: 2 },
+    coins: 120,
+    desc: 'Build a serene fresh water fountain with soothing catnip aroma.'
+  },
+  {
+    id: 'neon_paw_sign',
+    name: 'Cyberpunk Neon Paw Sign 🐾',
+    furnitureId: 'neon_paw_sign',
+    materials: { wood: 4, catnip: 3 },
+    coins: 150,
+    desc: 'Assemble a glowing luminous neon wall sign.'
+  },
+  {
+    id: 'disco_ball_party',
+    name: 'Rainbow Disco Party Ball 🪩',
+    furnitureId: 'disco_ball_party',
+    materials: { wood: 3, yarn: 3 },
+    coins: 180,
+    desc: 'Reflective spinning disco ball that lights up the room!'
+  },
+  {
+    id: 'cozy_fireplace',
+    name: 'Mini Hearth Fireplace 🔥',
+    furnitureId: 'cozy_fireplace',
+    materials: { wood: 6, cardboard: 3 },
+    coins: 200,
+    desc: 'Build a warm brick fireplace to keep cats cozy on cold days.'
+  },
+  {
+    id: 'cat_bed_donut',
+    name: 'Velvet Donut Plush Bed 🍩',
+    furnitureId: 'cat_bed_donut',
+    materials: { yarn: 4, catnip: 2 },
+    coins: 60,
+    desc: 'Stitch together a plush velvet donut cushion.'
+  },
+  {
+    id: 'sakura_blossom_tree',
+    name: 'Spring Sakura Blossom Tree 🌸',
+    furnitureId: 'sakura_blossom_tree',
+    materials: { wood: 4, catnip: 3 },
+    coins: 80,
+    desc: 'Craft a beautiful cherry blossom tree for Spring festivities.'
+  },
+  {
+    id: 'jack_o_lantern_spooky',
+    name: 'Glowing Jack-O-Lantern 🎃',
+    furnitureId: 'jack_o_lantern_spooky',
+    materials: { cardboard: 4, catnip: 3 },
+    coins: 90,
+    desc: 'Carve a spooky glowing jack-o-lantern for Halloween!'
+  },
+  {
+    id: 'holiday_christmas_tree',
+    name: 'Festive Holiday Pine Tree 🎄',
+    furnitureId: 'holiday_christmas_tree',
+    materials: { wood: 6, yarn: 4 },
+    coins: 150,
+    desc: 'Decorate a festive pine tree for the Winter Holiday season.'
+  }
+];
+
+const ROOM_THEMES = [
+  { id: 'default', name: '🛋️ Cozy Classic', class: '', desc: 'Standard warm domestic room style.' },
+  { id: 'cottagecore', name: '🌸 Cottagecore Floral', class: 'theme-cottagecore', desc: 'Warm floral wallpaper & natural wooden accents.' },
+  { id: 'cyberpunk', name: '🏙️ Cyberpunk Neon Grid', class: 'theme-cyberpunk', desc: 'Dark synthwave aesthetic with neon cyan & magenta glow.' },
+  { id: 'royal', name: '👑 Royal Gold & Velvet', class: 'theme-royal', desc: 'Regal purple walls with opulent gold trim.' },
+  { id: 'space', name: '🌌 Galactic Starfield', class: 'theme-space', desc: 'Deep cosmic starfield background.' },
+  { id: 'pastel', name: '🎀 Cute Pastel Pink', class: 'theme-pastel', desc: 'Sweet pastel pink & mint aesthetic.' }
+];
+
+let activeDecorTab = 'catalog';
+
+function awardRandomCraftingMaterial() {
+  if (!state.data) return;
+  if (!state.data.craftingMaterials) {
+    state.data.craftingMaterials = { yarn: 5, cardboard: 5, wood: 5, catnip: 3 };
+  }
+  const keys = ['yarn', 'cardboard', 'wood', 'catnip'];
+  const icons = { yarn: '🧶', cardboard: '📦', wood: '🪵', catnip: '🌿' };
+  const names = { yarn: 'Yarn Ball', cardboard: 'Cardboard Box', wood: 'Wood Plank', catnip: 'Shiny Catnip' };
+  const chosen = keys[Math.floor(Math.random() * keys.length)];
+  state.data.craftingMaterials[chosen] = (state.data.craftingMaterials[chosen] || 0) + 1;
+  state.saveProfiles();
+  showToast(`🎁 Found crafting material: ${icons[chosen]} 1x ${names[chosen]}!`);
+  updateDecorMaterialsHeader();
+}
+
+function updateDecorMaterialsHeader() {
+  if (!state.data) return;
+  const mats = state.data.craftingMaterials || { yarn: 0, cardboard: 0, wood: 0, catnip: 0 };
+  const yarnEl = document.getElementById('decor-mat-yarn');
+  const cbEl = document.getElementById('decor-mat-cardboard');
+  const woodEl = document.getElementById('decor-mat-wood');
+  const catnipEl = document.getElementById('decor-mat-catnip');
+  const coinsEl = document.getElementById('decor-mat-coins');
+
+  if (yarnEl) yarnEl.textContent = mats.yarn || 0;
+  if (cbEl) cbEl.textContent = mats.cardboard || 0;
+  if (woodEl) woodEl.textContent = mats.wood || 0;
+  if (catnipEl) catnipEl.textContent = mats.catnip || 0;
+  if (coinsEl) coinsEl.textContent = state.data.coins || 0;
+}
+
+function openDecorStudioModal() {
+  updateDecorMaterialsHeader();
+  renderDecorTabContent(activeDecorTab);
+  const modal = document.getElementById('decor-studio-modal');
+  if (modal) modal.classList.add('active');
+}
+
+function renderDecorTabContent(tabName) {
+  activeDecorTab = tabName;
+  document.querySelectorAll('.decor-tab-btn').forEach(btn => {
+    const isActive = btn.dataset.tab === tabName;
+    btn.classList.toggle('active', isActive);
+    btn.style.background = isActive ? 'var(--accent-pink)' : 'rgba(0,0,0,0.05)';
+    btn.style.color = isActive ? '#fff' : 'var(--text-dark)';
+  });
+
+  const container = document.getElementById('decor-tab-content');
+  if (!container) return;
+  container.innerHTML = '';
+
+  if (tabName === 'catalog') {
+    renderFurnitureShopGrid(container);
+  } else if (tabName === 'crafting') {
+    renderCraftingWorkbenchGrid(container);
+  } else if (tabName === 'themes') {
+    renderThemesGrid(container);
+  } else if (tabName === 'seasons') {
+    renderSeasonsTabGrid(container);
+  } else if (tabName === 'inventory') {
+    renderInventoryAndLayoutGrid(container);
+  }
+}
+
+function renderFurnitureShopGrid(container) {
+  const grid = document.createElement('div');
+  grid.className = 'decor-grid';
+
+  FURNITURE_CATALOG.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'decor-card';
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'decor-card-icon';
+    iconDiv.innerHTML = item.svg;
+
+    const title = document.createElement('div');
+    title.className = 'decor-card-title';
+    title.textContent = item.name;
+
+    const desc = document.createElement('div');
+    desc.className = 'decor-card-desc';
+    desc.textContent = item.desc;
+
+    const buyBtn = document.createElement('button');
+    buyBtn.className = 'btn primary-btn';
+    buyBtn.style.width = '100%';
+    buyBtn.style.padding = '8px';
+    buyBtn.style.fontSize = '0.85rem';
+    buyBtn.textContent = `Buy 🪙 ${item.cost}`;
+
+    buyBtn.addEventListener('click', () => {
+      if (state.data.coins < item.cost) {
+        showToast('❌ Not enough coins!');
+        if (typeof audio !== 'undefined' && audio.playPhoneTone) audio.playPhoneTone(300, 300, 0.2);
+        return;
+      }
+      state.data.coins -= item.cost;
+      if (!state.data.furnitureInventory) state.data.furnitureInventory = [];
+      state.data.furnitureInventory.push(item.id);
+      state.saveProfiles();
+      updateDecorMaterialsHeader();
+      updateHeaderStatsUI();
+      showToast(`🎉 Bought ${item.name}! Added to your inventory.`);
+      if (typeof audio !== 'undefined' && audio.playCashRegister) audio.playCashRegister();
+      renderDecorTabContent('inventory');
+    });
+
+    card.appendChild(iconDiv);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(buyBtn);
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+}
+
+function renderCraftingWorkbenchGrid(container) {
+  const grid = document.createElement('div');
+  grid.className = 'decor-grid';
+
+  const mats = state.data.craftingMaterials || { yarn: 0, cardboard: 0, wood: 0, catnip: 0 };
+
+  CRAFTING_RECIPES.forEach(recipe => {
+    const furniture = FURNITURE_CATALOG.find(f => f.id === recipe.furnitureId);
+    if (!furniture) return;
+
+    const card = document.createElement('div');
+    card.className = 'decor-card';
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'decor-card-icon';
+    iconDiv.innerHTML = furniture.svg;
+
+    const title = document.createElement('div');
+    title.className = 'decor-card-title';
+    title.textContent = recipe.name;
+
+    const desc = document.createElement('div');
+    desc.className = 'decor-card-desc';
+    desc.textContent = recipe.desc;
+
+    const reqsDiv = document.createElement('div');
+    reqsDiv.className = 'decor-recipe-reqs';
+
+    let canCraft = true;
+
+    const coinMet = state.data.coins >= recipe.coins;
+    if (!coinMet) canCraft = false;
+    const coinBadge = document.createElement('span');
+    coinBadge.className = `decor-req-badge ${coinMet ? 'met' : 'missing'}`;
+    coinBadge.textContent = `🪙 ${recipe.coins}`;
+    reqsDiv.appendChild(coinBadge);
+
+    const matIcons = { yarn: '🧶', cardboard: '📦', wood: '🪵', catnip: '🌿' };
+    Object.keys(recipe.materials).forEach(mKey => {
+      const needed = recipe.materials[mKey];
+      const have = mats[mKey] || 0;
+      const isMet = have >= needed;
+      if (!isMet) canCraft = false;
+
+      const badge = document.createElement('span');
+      badge.className = `decor-req-badge ${isMet ? 'met' : 'missing'}`;
+      badge.textContent = `${matIcons[mKey]} ${have}/${needed}`;
+      reqsDiv.appendChild(badge);
+    });
+
+    const craftBtn = document.createElement('button');
+    craftBtn.className = `btn ${canCraft ? 'action-btn' : 'secondary-btn'}`;
+    craftBtn.style.width = '100%';
+    craftBtn.style.padding = '8px';
+    craftBtn.style.fontSize = '0.85rem';
+    craftBtn.disabled = !canCraft;
+    craftBtn.textContent = canCraft ? '🔨 Craft Item!' : '🔒 Materials Needed';
+
+    craftBtn.addEventListener('click', () => {
+      if (!canCraft) return;
+
+      state.data.coins -= recipe.coins;
+      Object.keys(recipe.materials).forEach(mKey => {
+        state.data.craftingMaterials[mKey] -= recipe.materials[mKey];
+      });
+
+      if (!state.data.furnitureInventory) state.data.furnitureInventory = [];
+      state.data.furnitureInventory.push(recipe.furnitureId);
+      state.saveProfiles();
+
+      updateDecorMaterialsHeader();
+      updateHeaderStatsUI();
+      showToast(`✨ Crafted ${furniture.name}!`);
+      if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare();
+      renderDecorTabContent('crafting');
+    });
+
+    card.appendChild(iconDiv);
+    card.appendChild(title);
+    card.appendChild(desc);
+    card.appendChild(reqsDiv);
+    card.appendChild(craftBtn);
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+}
+
+function renderThemesGrid(container) {
+  const grid = document.createElement('div');
+  grid.className = 'theme-grid';
+
+  const currentTheme = (state.data.roomThemes && state.data.roomThemes[currentRoom]) || 'default';
+
+  ROOM_THEMES.forEach(theme => {
+    const card = document.createElement('div');
+    const isActive = currentTheme === theme.id;
+    card.className = `theme-card ${isActive ? 'active-theme' : ''}`;
+
+    const preview = document.createElement('div');
+    preview.className = `theme-preview-box play-space ${theme.class}`;
+
+    const info = document.createElement('div');
+    info.style.padding = '10px';
+    info.style.textAlign = 'center';
+
+    const title = document.createElement('h4');
+    title.style.margin = '0 0 4px 0';
+    title.style.fontFamily = 'var(--display-font)';
+    title.style.fontSize = '0.95rem';
+    title.textContent = theme.name;
+
+    const desc = document.createElement('p');
+    desc.style.margin = '0 0 8px 0';
+    desc.style.fontSize = '0.75rem';
+    desc.style.color = 'var(--text-muted)';
+    desc.textContent = theme.desc;
+
+    const applyBtn = document.createElement('button');
+    applyBtn.className = `btn ${isActive ? 'primary-btn' : 'secondary-btn'}`;
+    applyBtn.style.width = '100%';
+    applyBtn.style.padding = '6px';
+    applyBtn.style.fontSize = '0.8rem';
+    applyBtn.textContent = isActive ? '✓ Applied' : 'Apply Theme';
+
+    applyBtn.addEventListener('click', () => {
+      if (!state.data.roomThemes) state.data.roomThemes = {};
+      state.data.roomThemes[currentRoom] = theme.id;
+      state.saveProfiles();
+      applyRoomTheme(currentRoom);
+      showToast(`🎨 Applied ${theme.name} to ${currentRoom}!`);
+      renderDecorTabContent('themes');
+    });
+
+    info.appendChild(title);
+    info.appendChild(desc);
+    info.appendChild(applyBtn);
+    card.appendChild(preview);
+    card.appendChild(info);
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+}
+
+function renderInventoryAndLayoutGrid(container) {
+  if (!state.data.furnitureInventory) state.data.furnitureInventory = [];
+  if (!state.data.placedDecorations) state.data.placedDecorations = {};
+
+  const roomPlaced = state.data.placedDecorations[currentRoom] || [];
+
+  const header = document.createElement('div');
+  header.style.marginBottom = '12px';
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+  header.style.flexWrap = 'wrap';
+  header.style.gap = '8px';
+  header.innerHTML = `
+    <div>
+      <h3 style="margin:0; font-family:var(--display-font); color:var(--text-dark); font-size:1.05rem;">
+        Room Canvas: <span style="color:var(--accent-pink);">${currentRoom}</span>
+      </h3>
+      <p style="margin:2px 0 0 0; font-size:0.78rem; color:var(--text-muted);">
+        Place furniture in this room or return items to inventory.
+      </p>
+    </div>
+  `;
+  container.appendChild(header);
+
+  if (state.data.furnitureInventory.length === 0 && roomPlaced.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.textAlign = 'center';
+    empty.style.padding = '30px 10px';
+    empty.style.color = 'var(--text-muted)';
+    empty.innerHTML = `
+      <div style="font-size:3rem; margin-bottom:8px;">📦</div>
+      <p style="margin:0; font-weight:700;">Your furniture inventory is empty!</p>
+      <p style="font-size:0.8rem; margin-top:4px;">Buy items from the Furniture Shop or craft them in the Crafting Workbench.</p>
+    `;
+    container.appendChild(empty);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'decor-grid';
+
+  const inventoryCounts = {};
+  state.data.furnitureInventory.forEach(id => {
+    inventoryCounts[id] = (inventoryCounts[id] || 0) + 1;
+  });
+
+  Object.keys(inventoryCounts).forEach(itemId => {
+    const count = inventoryCounts[itemId];
+    const furniture = FURNITURE_CATALOG.find(f => f.id === itemId);
+    if (!furniture) return;
+
+    const card = document.createElement('div');
+    card.className = 'decor-card';
+
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'decor-card-icon';
+    iconDiv.innerHTML = furniture.svg;
+
+    const badge = document.createElement('div');
+    badge.style.position = 'absolute';
+    badge.style.top = '6px';
+    badge.style.right = '6px';
+    badge.style.background = 'var(--accent-pink)';
+    badge.style.color = '#fff';
+    badge.style.fontSize = '0.7rem';
+    badge.style.fontWeight = '800';
+    badge.style.padding = '2px 6px';
+    badge.style.borderRadius = '10px';
+    badge.textContent = `x${count}`;
+    card.appendChild(badge);
+
+    const title = document.createElement('div');
+    title.className = 'decor-card-title';
+    title.textContent = furniture.name;
+
+    const placeBtn = document.createElement('button');
+    placeBtn.className = 'btn primary-btn';
+    placeBtn.style.width = '100%';
+    placeBtn.style.padding = '6px';
+    placeBtn.style.fontSize = '0.8rem';
+    placeBtn.textContent = '➕ Place in Room';
+
+    placeBtn.addEventListener('click', () => {
+      const idx = state.data.furnitureInventory.indexOf(itemId);
+      if (idx !== -1) {
+        state.data.furnitureInventory.splice(idx, 1);
+      }
+      if (!state.data.placedDecorations[currentRoom]) {
+        state.data.placedDecorations[currentRoom] = [];
+      }
+      const posX = 15 + Math.floor(Math.random() * 60);
+      const posY = 45 + Math.floor(Math.random() * 25);
+      state.data.placedDecorations[currentRoom].push({
+        id: itemId,
+        x: posX,
+        y: posY
+      });
+
+      state.saveProfiles();
+      renderRoomDecorations();
+      showToast(`🛋️ Placed ${furniture.name} in ${currentRoom}!`);
+      renderDecorTabContent('inventory');
+    });
+
+    card.appendChild(iconDiv);
+    card.appendChild(title);
+    card.appendChild(placeBtn);
+    grid.appendChild(card);
+  });
+
+  if (roomPlaced.length > 0) {
+    const placedSectionHeader = document.createElement('h4');
+    placedSectionHeader.style.gridColumn = '1 / -1';
+    placedSectionHeader.style.margin = '16px 0 6px 0';
+    placedSectionHeader.style.fontFamily = 'var(--display-font)';
+    placedSectionHeader.style.color = 'var(--text-dark)';
+    placedSectionHeader.textContent = `Currently Placed in ${currentRoom} (${roomPlaced.length} items):`;
+    grid.appendChild(placedSectionHeader);
+
+    roomPlaced.forEach((pItem, pIdx) => {
+      const furniture = FURNITURE_CATALOG.find(f => f.id === pItem.id);
+      if (!furniture) return;
+
+      const card = document.createElement('div');
+      card.className = 'decor-card';
+      card.style.background = '#e8f5e9';
+      card.style.borderColor = '#a5d6a7';
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'decor-card-icon';
+      iconDiv.innerHTML = furniture.svg;
+
+      const title = document.createElement('div');
+      title.className = 'decor-card-title';
+      title.textContent = furniture.name;
+
+      const posLabel = document.createElement('div');
+      posLabel.style.fontSize = '0.7rem';
+      posLabel.style.color = '#2e7d32';
+      posLabel.style.fontWeight = '700';
+      posLabel.style.marginBottom = '6px';
+      posLabel.textContent = `Pos: (${pItem.x}%, ${pItem.y}%)`;
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn secondary-btn';
+      removeBtn.style.width = '100%';
+      removeBtn.style.padding = '6px';
+      removeBtn.style.fontSize = '0.8rem';
+      removeBtn.style.color = '#c62828';
+      removeBtn.textContent = '↩️ Store in Inventory';
+
+      removeBtn.addEventListener('click', () => {
+        state.data.placedDecorations[currentRoom].splice(pIdx, 1);
+        if (!state.data.furnitureInventory) state.data.furnitureInventory = [];
+        state.data.furnitureInventory.push(pItem.id);
+        state.saveProfiles();
+        renderRoomDecorations();
+        showToast(`↩️ Returned ${furniture.name} to inventory.`);
+        renderDecorTabContent('inventory');
+      });
+
+      card.appendChild(iconDiv);
+      card.appendChild(title);
+      card.appendChild(posLabel);
+      card.appendChild(removeBtn);
+      grid.appendChild(card);
+    });
+  }
+
+  container.appendChild(grid);
+}
+
+function applyRoomTheme(roomKey) {
+  const container = document.getElementById('play-space-container');
+  if (!container) return;
+
+  ROOM_THEMES.forEach(t => {
+    if (t.class) container.classList.remove(t.class);
+  });
+
+  const themeId = (state.data && state.data.roomThemes && state.data.roomThemes[roomKey]) || 'default';
+  const themeObj = ROOM_THEMES.find(t => t.id === themeId);
+
+  if (themeObj && themeObj.class) {
+    container.classList.add(themeObj.class);
+  }
+}
+
+function renderRoomDecorations() {
+  const layer = document.getElementById('custom-furniture-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+
+  if (!state.data || !state.data.placedDecorations) return;
+  const placed = state.data.placedDecorations[currentRoom] || [];
+
+  placed.forEach((itemData) => {
+    const catalogItem = FURNITURE_CATALOG.find(f => f.id === itemData.id);
+    if (!catalogItem) return;
+
+    const el = document.createElement('div');
+    el.className = `placed-furniture-item ${catalogItem.extraClass || ''}`;
+    el.style.left = `${itemData.x}%`;
+    el.style.top = `${itemData.y}%`;
+    el.title = `${catalogItem.name} - Click to interact!`;
+    el.innerHTML = catalogItem.svg;
+
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      el.classList.add('active-interaction');
+      setTimeout(() => el.classList.remove('active-interaction'), 450);
+
+      showToast(catalogItem.interactionMsg);
+      if (catalogItem.interactionSound) catalogItem.interactionSound();
+
+      if (state.data.activeCats && state.data.activeCats.length > 0) {
+        state.data.activeCats.forEach(c => {
+          c.happiness = Math.min(100, c.happiness + 5);
+        });
+        state.saveProfiles();
+        renderFocusCatDetails();
+      }
+    });
+
+    layer.appendChild(el);
+  });
+}
+
+// Event Listeners for Decor Studio Modal
+const decorBtn = document.getElementById('open-decor-studio-btn');
+if (decorBtn) {
+  decorBtn.addEventListener('click', () => {
+    openDecorStudioModal();
+  });
+}
+
+document.querySelectorAll('.decor-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    renderDecorTabContent(btn.dataset.tab);
+  });
+});
+
+// ==========================================
+// 🎆 DYNAMIC 4-SEASON CALENDAR SYSTEM MODULE
+// ==========================================
+
+const SEASONS_CONFIG = {
+  spring: {
+    name: 'Spring Blossom',
+    icon: '🌸',
+    months: [0, 1, 2],
+    class: 'season-spring',
+    particleClass: 'particle-sakura',
+    particleSymbol: '🌸',
+    particleCount: 12,
+    badgeStyle: 'background:#fce4ec; color:#c2185b; border:1px solid #f48fb1;'
+  },
+  summer: {
+    name: 'Summer Splash',
+    icon: '☀️',
+    months: [3, 4, 5],
+    class: 'season-summer',
+    particleClass: 'particle-sunbeam',
+    particleSymbol: '',
+    particleCount: 2,
+    badgeStyle: 'background:#e0f7fa; color:#00838f; border:1px solid #80deea;'
+  },
+  autumn: {
+    name: 'Autumn Harvest',
+    icon: '🍁',
+    months: [6, 7, 8],
+    class: 'season-autumn',
+    particleClass: 'particle-leaf',
+    particleSymbol: '🍁',
+    particleCount: 10,
+    badgeStyle: 'background:#fff3e0; color:#e65100; border:1px solid #ffe0b2;'
+  },
+  halloween: {
+    name: 'Spooky Oct-Claw',
+    icon: '🎃',
+    months: [9],
+    class: 'season-halloween',
+    particleClass: 'particle-spooky',
+    particleSymbol: '👻',
+    particleCount: 8,
+    badgeStyle: 'background:#ede7f6; color:#4a148c; border:1px solid #d1c4e9;'
+  },
+  winter: {
+    name: 'Winter Wonderland',
+    icon: '❄️',
+    months: [10, 11],
+    class: 'season-winter',
+    particleClass: 'particle-snow',
+    particleSymbol: '❄️',
+    particleCount: 16,
+    badgeStyle: 'background:#e0f2f1; color:#00695c; border:1px solid #b2dfdb;'
+  }
+};
+
+let currentSeasonKey = 'spring';
+
+function getCurrentSeasonKey() {
+  if (!state.data) return 'spring';
+  if (state.data.manualSeason && state.data.manualSeason !== 'auto' && SEASONS_CONFIG[state.data.manualSeason]) {
+    return state.data.manualSeason;
+  }
+  const month = state.data.calendarMonth !== undefined ? state.data.calendarMonth : 1;
+  for (const key in SEASONS_CONFIG) {
+    if (SEASONS_CONFIG[key].months.includes(month)) {
+      return key;
+    }
+  }
+  return 'spring';
+}
+
+function updateSeasonSystem() {
+  const seasonKey = getCurrentSeasonKey();
+  const config = SEASONS_CONFIG[seasonKey] || SEASONS_CONFIG.spring;
+  const isNewSeason = (seasonKey !== currentSeasonKey);
+  currentSeasonKey = seasonKey;
+
+  // 1. Update Header Badge
+  const badgeEl = document.getElementById('header-season-badge');
+  const displayEl = document.getElementById('header-season-display');
+  if (badgeEl && displayEl) {
+    displayEl.textContent = `${config.icon} ${config.name}`;
+    badgeEl.style.cssText = config.badgeStyle + ' font-weight:800; cursor:pointer;';
+  }
+
+  // 2. Render Ambient Weather Particles
+  const particleLayer = document.getElementById('seasonal-particle-layer');
+  if (particleLayer) {
+    particleLayer.innerHTML = '';
+    const count = config.particleCount || 10;
+    
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = `seasonal-particle ${config.particleClass}`;
+      p.style.left = `${Math.random() * 95}%`;
+      p.style.animationDelay = `${(Math.random() * 6).toFixed(2)}s`;
+      p.style.animationDuration = `${(5 + Math.random() * 5).toFixed(2)}s`;
+      if (config.particleSymbol) {
+        p.textContent = config.particleSymbol;
+      }
+      particleLayer.appendChild(p);
+    }
+  }
+
+  // 3. Apply Seasonal Room Weather Overlay if room theme is default
+  const container = document.getElementById('play-space-container');
+  if (container) {
+    // Clear old seasonal classes
+    Object.values(SEASONS_CONFIG).forEach(s => {
+      if (s.class) container.classList.remove(s.class);
+    });
+
+    const activeRoomTheme = (state.data && state.data.roomThemes && state.data.roomThemes[currentRoom]) || 'default';
+    if (activeRoomTheme === 'default' && config.class) {
+      container.classList.add(config.class);
+    }
+  }
+
+  if (isNewSeason) {
+    showToast(`🎆 Welcome to ${config.icon} ${config.name}! Seasonal festivities have begun!`);
+  }
+}
+
+// Hook Season Update into updateHeaderStats
+const origUpdateHeaderStats = updateHeaderStats;
+updateHeaderStats = function() {
+  origUpdateHeaderStats();
+  if (typeof updateSeasonSystem === 'function') updateSeasonSystem();
+};
+
+function selectSeason(seasonKey) {
+  if (!state.data) return;
+  state.data.manualSeason = seasonKey;
+  state.saveProfiles();
+  updateSeasonSystem();
+  const name = seasonKey === 'auto' ? 'Auto (Calendar Month)' : (SEASONS_CONFIG[seasonKey] ? SEASONS_CONFIG[seasonKey].name : seasonKey);
+  showToast(`🌤️ Season set to: ${name}!`);
+}
+
+function renderSeasonsTabGrid(container) {
+  const wrapper = document.createElement('div');
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
+  wrapper.style.gap = '14px';
+
+  const currentKey = state.data.manualSeason || 'auto';
+
+  const autoCard = document.createElement('div');
+  autoCard.className = `decor-card ${currentKey === 'auto' ? 'active-theme' : ''}`;
+  autoCard.style.padding = '14px';
+  autoCard.style.cursor = 'pointer';
+  autoCard.style.border = currentKey === 'auto' ? '2px solid var(--accent-pink)' : '1px solid rgba(0,0,0,0.1)';
+  autoCard.innerHTML = `
+    <div style="font-size:1.8rem; margin-bottom:4px;">🔄</div>
+    <div class="decor-card-title">Auto Mode (Follow 12 Calendar Months)</div>
+    <div class="decor-card-desc">Automatically cycles through Spring 🌸, Summer ☀️, Autumn 🍁, Oct-Claw 🎃, and Winter ❄️ as calendar months advance!</div>
+    <button class="btn ${currentKey === 'auto' ? 'primary-btn' : 'secondary-btn'}" style="width:100%; margin-top:6px;">
+      ${currentKey === 'auto' ? '✓ Currently Active' : 'Switch to Auto Mode'}
+    </button>
+  `;
+  autoCard.querySelector('button').addEventListener('click', () => {
+    selectSeason('auto');
+    renderSeasonsTabGrid(container);
+  });
+  wrapper.appendChild(autoCard);
+
+  const grid = document.createElement('div');
+  grid.className = 'theme-grid';
+
+  Object.keys(SEASONS_CONFIG).forEach(key => {
+    const s = SEASONS_CONFIG[key];
+    const card = document.createElement('div');
+    const isActive = (currentKey === key);
+    card.className = `theme-card ${isActive ? 'active-theme' : ''}`;
+
+    const preview = document.createElement('div');
+    preview.className = `theme-preview-box play-space ${s.class}`;
+    preview.innerHTML = `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:2.2rem;">${s.icon}</div>`;
+
+    const info = document.createElement('div');
+    info.style.padding = '10px';
+    info.style.textAlign = 'center';
+
+    const title = document.createElement('h4');
+    title.style.margin = '0 0 4px 0';
+    title.style.fontFamily = 'var(--display-font)';
+    title.textContent = `${s.icon} ${s.name}`;
+
+    const applyBtn = document.createElement('button');
+    applyBtn.className = `btn ${isActive ? 'primary-btn' : 'secondary-btn'}`;
+    applyBtn.style.width = '100%';
+    applyBtn.style.padding = '6px';
+    applyBtn.style.fontSize = '0.8rem';
+    applyBtn.textContent = isActive ? '✓ Active' : 'Set Season';
+
+    applyBtn.addEventListener('click', () => {
+      selectSeason(key);
+      renderSeasonsTabGrid(container);
+    });
+
+    info.appendChild(title);
+    info.appendChild(applyBtn);
+    card.appendChild(preview);
+    card.appendChild(info);
+    grid.appendChild(card);
+  });
+
+  wrapper.appendChild(grid);
+  container.appendChild(wrapper);
+}
+
+// Quick Season Selector Modal Listener
+const seasonBadge = document.getElementById('header-season-badge');
+if (seasonBadge) {
+  seasonBadge.addEventListener('click', () => {
+    openQuickSeasonModal();
+  });
+}
+
+function openQuickSeasonModal() {
+  const grid = document.getElementById('quick-season-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const currentKey = state.data.manualSeason || 'auto';
+
+  // Auto button
+  const autoBtn = document.createElement('button');
+  autoBtn.className = `btn ${currentKey === 'auto' ? 'primary-btn' : 'secondary-btn'}`;
+  autoBtn.style.padding = '10px';
+  autoBtn.style.gridColumn = 'span 2';
+  autoBtn.style.fontWeight = '800';
+  autoBtn.textContent = '🔄 Auto Mode (Follow 12 Months)';
+  autoBtn.addEventListener('click', () => {
+    selectSeason('auto');
+    const modal = document.getElementById('season-modal');
+    if (modal) modal.classList.remove('active');
+  });
+  grid.appendChild(autoBtn);
+
+  Object.keys(SEASONS_CONFIG).forEach(key => {
+    const s = SEASONS_CONFIG[key];
+    const btn = document.createElement('button');
+    const isActive = (currentKey === key);
+    btn.className = `btn ${isActive ? 'primary-btn' : 'secondary-btn'}`;
+    btn.style.padding = '12px 8px';
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.justifyContent = 'center';
+    btn.style.gap = '6px';
+    btn.style.fontWeight = '800';
+    btn.textContent = `${s.icon} ${s.name}`;
+
+    btn.addEventListener('click', () => {
+      selectSeason(key);
+      const modal = document.getElementById('season-modal');
+      if (modal) modal.classList.remove('active');
+    });
+
+    grid.appendChild(btn);
+  });
+
+  const modal = document.getElementById('season-modal');
+  if (modal) modal.classList.add('active');
+}
+
+// ==========================================
+// 🎆 SEASONAL SPECIALS SMARTPHONE APP & MASTER SEASONAL FEATURES
+// ==========================================
+
+const FLOWER_CATALOG = [
+  { id: 'fl_sakura', name: '🌸 Cherry Blossom', cost: 10, icon: '🌸' },
+  { id: 'fl_lotus', name: '🪷 Royal Lotus', cost: 15, icon: '🪷' },
+  { id: 'fl_rose', name: '🌹 Red Velvet Rose', cost: 12, icon: '🌹' },
+  { id: 'fl_hibiscus', name: '🌺 Tropical Hibiscus', cost: 14, icon: '🌺' },
+  { id: 'fl_sunflower', name: '🌻 Sunny Sunflower', cost: 10, icon: '🌻' },
+  { id: 'fl_daisy', name: '🌼 Soft White Daisy', cost: 8, icon: '🌼' },
+  { id: 'fl_tulip', name: '🌷 Sweet Pink Tulip', cost: 12, icon: '🌷' },
+  { id: 'fl_lavender', name: '🪻 Calm Lavender', cost: 15, icon: '🪻' }
+];
+
+const WINTER_WISHLIST_GIFTS = [
+  { id: 'gift_sweater', name: '🧶 Soft Wool Sweater', cost: 25, icon: '🧶', desc: 'Warm winter sweater' },
+  { id: 'gift_train', name: '🚂 Toy Express Train', cost: 30, icon: '🚂', desc: 'Chugging holiday train toy' },
+  { id: 'gift_reindeer', name: '🦌 Reindeer Plushie', cost: 20, icon: '🦌', desc: 'Cute plush reindeer' },
+  { id: 'gift_crown', name: '👑 Gold Holiday Crown', cost: 35, icon: '👑', desc: 'Royal golden crown' }
+];
+
+let activeSeasonalAppTab = 'spring';
+
+function initSeasonalSpecialsAppUI() {
+  const seasonKey = getCurrentSeasonKey();
+  const badge = document.getElementById('seasonalspecials-badge');
+  if (badge) {
+    const icon = SEASONS_CONFIG[seasonKey] ? SEASONS_CONFIG[seasonKey].icon : '🎆';
+    const name = SEASONS_CONFIG[seasonKey] ? SEASONS_CONFIG[seasonKey].name : 'Seasonal';
+    badge.textContent = `${icon} ${name}`;
+  }
+
+  document.querySelectorAll('.seasonalspecials-tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      activeSeasonalAppTab = btn.dataset.tab;
+      audio.playPhoneTone(600, 750, 0.05);
+      renderSeasonalAppTabContent(activeSeasonalAppTab);
+    };
+  });
+
+  renderSeasonalAppTabContent(activeSeasonalAppTab);
+}
+
+function renderSeasonalAppTabContent(tabKey) {
+  document.querySelectorAll('.seasonalspecials-tab-btn').forEach(btn => {
+    const isActive = btn.dataset.tab === tabKey;
+    btn.classList.toggle('active', isActive);
+    btn.style.background = isActive ? '#8e24aa' : 'rgba(0,0,0,0.05)';
+    btn.style.color = isActive ? '#fff' : 'var(--text-dark)';
+  });
+
+  const container = document.getElementById('seasonalspecials-container');
+  if (!container || !state.data) return;
+  container.innerHTML = '';
+
+  if (!state.data.ownedFlowers) state.data.ownedFlowers = {};
+  if (!state.data.craftedBouquets) state.data.craftedBouquets = 0;
+
+  if (tabKey === 'spring') {
+    renderSpringTab(container);
+  } else if (tabKey === 'summer') {
+    renderSummerTab(container);
+  } else if (tabKey === 'autumn') {
+    renderAutumnTab(container);
+  } else if (tabKey === 'winter') {
+    renderWinterTab(container);
+  }
+}
+
+function renderSpringTab(container) {
+  const header = document.createElement('div');
+  header.style.cssText = "background: #fce4ec; border: 1px solid #f48fb1; border-radius: 8px; padding: 6px; font-size: 0.65rem; text-align: center; color: #c2185b; font-weight: 700;";
+  header.innerHTML = "🌸 Spring Flower Market & Bouquet Studio 💐<br><span style='font-size:0.55rem; font-weight:normal; color:#880e4f;'>Buy flowers & combine 3+ into a custom bouquet!</span>";
+  container.appendChild(header);
+
+  const totalOwnedFlowers = Object.values(state.data.ownedFlowers || {}).reduce((a, b) => a + b, 0);
+
+  const craftBox = document.createElement('div');
+  craftBox.style.cssText = "background: white; border: 1px dashed #f48fb1; border-radius: 8px; padding: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.62rem;";
+  craftBox.innerHTML = `
+    <div>
+      <strong>Owned Flowers:</strong> ${totalOwnedFlowers} | <strong>Bouquets:</strong> ${state.data.craftedBouquets || 0} 💐
+    </div>
+  `;
+
+  const craftBtn = document.createElement('button');
+  craftBtn.className = 'btn primary-btn';
+  craftBtn.style.cssText = "padding: 3px 8px; font-size: 0.58rem; background: #e91e63; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;";
+  craftBtn.textContent = "💐 Craft Bouquet (3+ Flowers)";
+  craftBtn.disabled = totalOwnedFlowers < 3;
+  if (totalOwnedFlowers < 3) craftBtn.style.opacity = '0.5';
+
+  craftBtn.onclick = () => {
+    if (totalOwnedFlowers < 3) return;
+    let needed = 3;
+    for (const fId in state.data.ownedFlowers) {
+      while (state.data.ownedFlowers[fId] > 0 && needed > 0) {
+        state.data.ownedFlowers[fId]--;
+        needed--;
+      }
+    }
+    state.data.craftedBouquets = (state.data.craftedBouquets || 0) + 1;
+    state.saveProfiles();
+    showToast("💐 Crafted a beautiful Spring Flower Bouquet!");
+    if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare();
+    renderSeasonalAppTabContent('spring');
+  };
+
+  craftBox.appendChild(craftBtn);
+  container.appendChild(craftBox);
+
+  if ((state.data.craftedBouquets || 0) > 0) {
+    const giftBtn = document.createElement('button');
+    giftBtn.className = 'btn action-btn';
+    giftBtn.style.cssText = "width: 100%; padding: 6px; font-size: 0.62rem; background: #2e7d32; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;";
+    giftBtn.textContent = "🎁 Gift Bouquet to Focus Cat (+40 Affection, +20 Happy)";
+    giftBtn.onclick = () => {
+      const cat = state.data.activeCats[focusCatIndex];
+      if (!cat) {
+        showToast("No cat selected!");
+        return;
+      }
+      state.data.craftedBouquets--;
+      cat.affection = Math.min(100, cat.affection + 40);
+      cat.happiness = Math.min(100, cat.happiness + 20);
+      state.saveProfiles();
+      renderFocusCatDetails();
+      showToast(`💐 Gifted Bouquet to ${cat.name}! +40 Affection & +20 Happiness!`);
+      if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound();
+      renderSeasonalAppTabContent('spring');
+    };
+    container.appendChild(giftBtn);
+  }
+
+  const grid = document.createElement('div');
+  grid.style.cssText = "display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;";
+
+  FLOWER_CATALOG.forEach(flower => {
+    const count = (state.data.ownedFlowers && state.data.ownedFlowers[flower.id]) || 0;
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #f8bbd0; border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; text-align: center;";
+    card.innerHTML = `
+      <div style="font-size: 1.3rem; margin-bottom: 2px;">${flower.icon}</div>
+      <strong style="font-size: 0.62rem; color: #37474f;">${flower.name}</strong>
+      <span style="font-size: 0.52rem; color: #880e4f; margin-bottom: 4px;">Owned: x${count}</span>
+      <button class="btn primary-btn" style="width: 100%; padding: 3px; font-size: 0.58rem; background: #ad1457; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
+        Buy ${flower.cost} 🪙
+      </button>
+    `;
+    card.querySelector('button').onclick = () => {
+      if (state.data.coins < flower.cost) {
+        showToast("❌ Not enough coins!");
+        return;
+      }
+      state.data.coins -= flower.cost;
+      state.data.ownedFlowers[flower.id] = count + 1;
+      state.saveProfiles();
+      updateHeaderStats();
+      showToast(`🌸 Bought 1x ${flower.name}!`);
+      renderSeasonalAppTabContent('spring');
+    };
+    grid.appendChild(card);
+  });
+
+  container.appendChild(grid);
+}
+
+function renderSummerTab(container) {
+  const header = document.createElement('div');
+  header.style.cssText = "background: #e0f7fa; border: 1px solid #80deea; border-radius: 8px; padding: 6px; font-size: 0.65rem; text-align: center; color: #00838f; font-weight: 700;";
+  header.innerHTML = "🍧 Summer Ice Cream Bar (2x BOOST ACTIVE) ☀️<br><span style='font-size:0.55rem; font-weight:normal; color:#006064;'>All Ice Creams give 2x Happiness & 2x Hunger during Summer!</span>";
+  container.appendChild(header);
+
+  const items = [
+    { id: 'shaved_ice', name: '🍧 Rainbow Shaved Ice', cost: 14, desc: '+25 Affection, Hunger +30, Happy +40', stats: { affection: 25, hunger: 30, happy: 40 } },
+    { id: 'icecream_strawberry', name: '🍓 Double Strawberry Scoop', cost: 8, desc: '2x Boost: Hunger +20, Happy +30', stats: { hunger: 20, happy: 30 } },
+    { id: 'icecream_choco', name: '🍫 Double Choco Fudge', cost: 10, desc: '2x Boost: Hunger +25, Happy +40', stats: { hunger: 25, happy: 40 } },
+    { id: 'icecream_mint', name: '🍨 Minty Fish Gelato', cost: 12, desc: '2x Boost: Hunger +30, Happy +50', stats: { hunger: 30, happy: 50 } }
+  ];
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #80deea; border-radius: 8px; padding: 6px; display: flex; justify-content: space-between; align-items: center;";
+    card.innerHTML = `
+      <div style="text-align: left;">
+        <strong style="font-size: 0.68rem; color: #00838f;">${item.name}</strong>
+        <div style="font-size: 0.52rem; color: #555;">${item.desc}</div>
+      </div>
+      <button class="btn" style="background: #00acc1; color: white; border: none; padding: 4px 8px; font-size: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        ${item.cost} 🪙
+      </button>
+    `;
+    card.querySelector('button').onclick = () => {
+      placeDeliveryOrder(item.id, item.cost, item.stats, item.name);
+    };
+    container.appendChild(card);
+  });
+}
+
+function renderAutumnTab(container) {
+  const header = document.createElement('div');
+  header.style.cssText = "background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 6px; font-size: 0.65rem; text-align: center; color: #e65100; font-weight: 700;";
+  header.innerHTML = "🍁 Autumn Harvest Specials & Popsicles 🍦<br><span style='font-size:0.55rem; font-weight:normal; color:#bf360c;'>Enjoy Autumn Maple Syrup, Leaves & Gelato Popsicles!</span>";
+  container.appendChild(header);
+
+  const items = [
+    { id: 'pops_maple', name: '🍦 Maple Caramel Popsicle', cost: 12, desc: 'Hunger +30, Happy +30, Affection +15', stats: { hunger: 30, happy: 30, affection: 15 } },
+    { id: 'pops_pumpkin', name: '🍦 Pumpkin Spice Gelato', cost: 15, desc: 'Hunger +40, Happy +40, Affection +20', stats: { hunger: 40, happy: 40, affection: 20 } },
+    { id: 'maple_syrup', name: '🍁🍯 Golden Maple Syrup', cost: 10, desc: 'Sweet Treat: +30 Affection, Hunger +15', stats: { affection: 30, hunger: 15 } },
+    { id: 'maple_leaves', name: '🍁 Golden Autumn Maple Leaves', cost: 5, desc: 'Playful Crunch: +20 Affection, Happy +15', stats: { affection: 20, happy: 15 } }
+  ];
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #ffe0b2; border-radius: 8px; padding: 6px; display: flex; justify-content: space-between; align-items: center;";
+    card.innerHTML = `
+      <div style="text-align: left;">
+        <strong style="font-size: 0.68rem; color: #e65100;">${item.name}</strong>
+        <div style="font-size: 0.52rem; color: #555;">${item.desc}</div>
+      </div>
+      <button class="btn" style="background: #fb8c00; color: white; border: none; padding: 4px 8px; font-size: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        ${item.cost} 🪙
+      </button>
+    `;
+    card.querySelector('button').onclick = () => {
+      placeDeliveryOrder(item.id, item.cost, item.stats, item.name);
+    };
+    container.appendChild(card);
+  });
+}
+
+function renderWinterTab(container) {
+  const header = document.createElement('div');
+  header.style.cssText = "background: #e0f2f1; border: 1px solid #b2dfdb; border-radius: 8px; padding: 6px; font-size: 0.65rem; text-align: center; color: #00695c; font-weight: 700;";
+  header.innerHTML = "❄️ Winter Treats 🍪 & Kitten Holiday Wishlists 🎁<br><span style='font-size:0.55rem; font-weight:normal; color:#004d40;'>Fulfill Kitten Wishlist gifts to reduce affection decay by 10% next year!</span>";
+  container.appendChild(header);
+
+  const treatsTitle = document.createElement('div');
+  treatsTitle.style.cssText = "font-size: 0.65rem; font-weight: 800; color: #004d40; margin-top: 4px;";
+  treatsTitle.textContent = "🍪 Winter Warm Treats:";
+  container.appendChild(treatsTitle);
+
+  const winterTreats = [
+    { id: 'winter_cookies', name: '🍪 Classic Winter Cookies', cost: 10, desc: 'Warm Cookies: Hunger +35, Happy +25', stats: { hunger: 35, happy: 25 } },
+    { id: 'winter_hotcocoa', name: '☕🍫 Hot Chocolate w/ Marshmallows', cost: 14, desc: 'Cozy Cocoa: Hunger +40, Happy +35, Energy +20', stats: { hunger: 40, happy: 35, energy: 20 } }
+  ];
+
+  winterTreats.forEach(item => {
+    const card = document.createElement('div');
+    card.style.cssText = "background: white; border: 1px solid #b2dfdb; border-radius: 8px; padding: 6px; display: flex; justify-content: space-between; align-items: center;";
+    card.innerHTML = `
+      <div style="text-align: left;">
+        <strong style="font-size: 0.68rem; color: #00695c;">${item.name}</strong>
+        <div style="font-size: 0.52rem; color: #555;">${item.desc}</div>
+      </div>
+      <button class="btn" style="background: #00897b; color: white; border: none; padding: 4px 8px; font-size: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">
+        ${item.cost} 🪙
+      </button>
+    `;
+    card.querySelector('button').onclick = () => {
+      placeDeliveryOrder(item.id, item.cost, item.stats, item.name);
+    };
+    container.appendChild(card);
+  });
+
+  const wishlistTitle = document.createElement('div');
+  wishlistTitle.style.cssText = "font-size: 0.65rem; font-weight: 800; color: #8e24aa; margin-top: 8px;";
+  wishlistTitle.textContent = "🎁 Kitten Holiday Wishlists:";
+  container.appendChild(wishlistTitle);
+
+  if (!state.data.activeCats || state.data.activeCats.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = "font-size: 0.6rem; color: #777; text-align: center; padding: 10px;";
+    empty.textContent = "No active cats in your home right now!";
+    container.appendChild(empty);
+    return;
+  }
+
+  state.data.activeCats.forEach((cat, idx) => {
+    if (!cat.winterWish) {
+      const g = WINTER_WISHLIST_GIFTS[Math.floor(Math.random() * WINTER_WISHLIST_GIFTS.length)];
+      cat.winterWish = g;
+    }
+    const wish = cat.winterWish;
+
+    const card = document.createElement('div');
+    const isFulfilled = cat.wishFulfilled;
+    card.style.cssText = `background: ${isFulfilled ? '#e8f5e9' : 'white'}; border: 1px solid ${isFulfilled ? '#a5d6a7' : '#e1bee7'}; border-radius: 8px; padding: 6px; display: flex; justify-content: space-between; align-items: center;`;
+
+    card.innerHTML = `
+      <div style="text-align: left;">
+        <strong style="font-size: 0.68rem; color: #4a148c;">🐱 ${cat.name}'s Wish: ${wish.name} ${wish.icon}</strong>
+        <div style="font-size: 0.52rem; color: ${isFulfilled ? '#2e7d32' : '#7b1fa2'}; font-weight:bold;">
+          ${isFulfilled ? '✓ Wish Fulfilled! (-10% Affection Decay Active)' : 'Fulfill wish for +50 Affection & -10% Affection Decay next year!'}
+        </div>
+      </div>
+      <button class="btn" style="background: ${isFulfilled ? '#2e7d32' : '#8e24aa'}; color: white; border: none; padding: 4px 8px; font-size: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;" ${isFulfilled ? 'disabled' : ''}>
+        ${isFulfilled ? '✓ Done' : `Gift ${wish.cost} 🪙`}
+      </button>
+    `;
+
+    if (!isFulfilled) {
+      card.querySelector('button').onclick = () => {
+        if (state.data.coins < wish.cost) {
+          showToast("❌ Not enough coins!");
+          return;
+        }
+        state.data.coins -= wish.cost;
+        cat.wishFulfilled = true;
+        cat.affection = Math.min(100, cat.affection + 50);
+        cat.happiness = Math.min(100, cat.happiness + 30);
+        cat.affectionDecayMult = 0.9;
+        state.saveProfiles();
+        updateHeaderStats();
+        renderFocusCatDetails();
+        showToast(`🎁 Wish Fulfilled! ${cat.name} loved the ${wish.name}! Affection decay reduced by 10% for next year! ✨`);
+        if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare();
+        renderSeasonalAppTabContent('winter');
+        renderCatWishlistBubbles();
+      };
+    }
+
+    container.appendChild(card);
+  });
+}
+
+function renderCatWishlistBubbles() {
+  const layer = document.getElementById('cats-wishlist-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+
+  const seasonKey = getCurrentSeasonKey();
+  if (seasonKey !== 'winter' && seasonKey !== 'halloween') return;
+  if (!state.data || !state.data.activeCats) return;
+
+  state.data.activeCats.forEach((cat, idx) => {
+    if (cat.wishFulfilled) return;
+    if (!cat.winterWish) {
+      cat.winterWish = WINTER_WISHLIST_GIFTS[Math.floor(Math.random() * WINTER_WISHLIST_GIFTS.length)];
+    }
+    const wish = cat.winterWish;
+
+    const container = document.getElementById('cats-render-area');
+    if (!container || !container.children[idx]) return;
+    const catEl = container.children[idx];
+    const rect = catEl.getBoundingClientRect();
+    const playRect = document.getElementById('play-space-container').getBoundingClientRect();
+
+    const posX = rect.left - playRect.left + (rect.width / 2) - 45;
+    const posY = rect.top - playRect.top - 28;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'cat-wishlist-bubble';
+    bubble.style.left = `${Math.max(10, posX)}px`;
+    bubble.style.top = `${Math.max(10, posY)}px`;
+    bubble.innerHTML = `🎁 <span>Wish: ${wish.icon}</span>`;
+    bubble.title = `${cat.name}'s Winter Wish: ${wish.name}! Click to fulfill!`;
+
+    bubble.onclick = (e) => {
+      e.stopPropagation();
+      switchPhoneView('seasonalspecials');
+      activeSeasonalAppTab = 'winter';
+      renderSeasonalAppTabContent('winter');
+    };
+
+    layer.appendChild(bubble);
+  });
+}
+
+
+

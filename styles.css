@@ -2323,3 +2323,333 @@ button, .btn, .room-tab, .cat-tab-btn, .phone-app-btn, .furnish-btn {
 .play-space.vacation-style {
   background: linear-gradient(180deg, #80deea 0%, #ffcc80 50%, #ffe082 100%) !important;
 }
+
+/* 🎨 ROOM DECOR STUDIO & FURNITURE CRAFTING STYLES */
+.placed-furniture-item {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.placed-furniture-item:hover {
+  transform: scale(1.08) translateY(-2px);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+}
+
+.placed-furniture-item.active-interaction {
+  animation: furniturePop 0.4s ease;
+}
+
+@keyframes furniturePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25) rotate(-3deg); }
+  100% { transform: scale(1); }
+}
+
+/* Interactive Furniture Keyframe Effects */
+.disco-ball-spin {
+  animation: rainbowGlow 2s infinite linear;
+}
+
+@keyframes rainbowGlow {
+  0% { filter: drop-shadow(0 0 10px #ff4081); }
+  33% { filter: drop-shadow(0 0 10px #7c4dff); }
+  66% { filter: drop-shadow(0 0 10px #00e676); }
+  100% { filter: drop-shadow(0 0 10px #ff4081); }
+}
+
+.neon-glow-pulse {
+  animation: neonPulse 1.5s infinite alternate ease-in-out;
+}
+
+@keyframes neonPulse {
+  0% { filter: drop-shadow(0 0 4px #00e5ff) drop-shadow(0 0 10px #00b0ff); }
+  100% { filter: drop-shadow(0 0 8px #ff4081) drop-shadow(0 0 18px #ff80ab); }
+}
+
+.aquarium-fish-swim {
+  animation: fishSwim 3s infinite alternate ease-in-out;
+}
+
+@keyframes fishSwim {
+  0% { transform: translateY(0) rotate(-1deg); }
+  100% { transform: translateY(-4px) rotate(2deg); }
+}
+
+.fountain-ripple {
+  animation: fountainBubbles 1.2s infinite ease-out;
+}
+
+@keyframes fountainBubbles {
+  0% { opacity: 0.9; transform: translateY(0) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-12px) scale(1.4); }
+}
+
+/* Decor Modal Grid Layout */
+.decor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+  padding: 4px;
+}
+
+.decor-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(141, 110, 99, 0.18);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+}
+
+.decor-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-pink);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.decor-card-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fffaf5, #f5efe6);
+  border-radius: 14px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(0,0,0,0.06);
+  font-size: 2rem;
+  position: relative;
+}
+
+.decor-card-title {
+  font-family: var(--display-font);
+  font-weight: 800;
+  color: var(--text-dark);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.decor-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  line-height: 1.25;
+}
+
+.decor-recipe-reqs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.decor-req-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #f0f4f8;
+  color: #334e68;
+  border: 1px solid #d9e2ec;
+}
+
+.decor-req-badge.met {
+  background: #e6fffa;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.decor-req-badge.missing {
+  background: #fff5f5;
+  color: #e53e3e;
+  border-color: #fed7d7;
+}
+
+/* Room Themes Styles */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.theme-card {
+  border-radius: 16px;
+  border: 2px solid rgba(0,0,0,0.1);
+  overflow: hidden;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-card:hover, .theme-card.active-theme {
+  border-color: var(--accent-pink);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(233, 30, 99, 0.2);
+}
+
+.theme-preview-box {
+  height: 90px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Wallpapers & Background Themes on .play-space */
+.play-space.theme-cottagecore {
+  background: linear-gradient(180deg, #f7eede 0%, #e8d5b7 60%, #c4a482 100%) !important;
+}
+
+.play-space.theme-cyberpunk {
+  background: linear-gradient(180deg, #1a0933 0%, #2e1065 60%, #030712 100%) !important;
+}
+
+.play-space.theme-royal {
+  background: linear-gradient(180deg, #2e1065 0%, #4c1d95 60%, #78350f 100%) !important;
+}
+
+.play-space.theme-space {
+  background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #0f172a 70%, #020617 100%) !important;
+}
+
+.play-space.theme-pastel {
+  background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 50%, #ddd6fe 100%) !important;
+}
+
+/* 🎆 4-SEASON WEATHER & PARTICLE ANIMATIONS */
+.seasonal-particle {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+  z-index: 4;
+}
+
+.particle-sakura {
+  font-size: 1.1rem;
+  animation: sakuraDrift 7s infinite linear;
+}
+
+@keyframes sakuraDrift {
+  0% { transform: translate(0, -20px) rotate(0deg); opacity: 0.95; }
+  50% { transform: translate(-35px, 160px) rotate(180deg); opacity: 0.8; }
+  100% { transform: translate(25px, 340px) rotate(360deg); opacity: 0; }
+}
+
+.particle-leaf {
+  font-size: 1.2rem;
+  animation: leafFall 8s infinite ease-in-out;
+}
+
+@keyframes leafFall {
+  0% { transform: translate(0, -20px) rotate(0deg); opacity: 0.9; }
+  33% { transform: translate(40px, 110px) rotate(120deg); }
+  66% { transform: translate(-25px, 220px) rotate(240deg); }
+  100% { transform: translate(20px, 340px) rotate(360deg); opacity: 0; }
+}
+
+.particle-snow {
+  font-size: 1rem;
+  color: #e0f7fa;
+  animation: snowFall 6s infinite linear;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));
+}
+
+@keyframes snowFall {
+  0% { transform: translate(0, -15px); opacity: 0.9; }
+  50% { transform: translate(12px, 170px); opacity: 0.75; }
+  100% { transform: translate(-8px, 340px); opacity: 0.1; }
+}
+
+.particle-sunbeam {
+  width: 140px;
+  height: 350px;
+  background: linear-gradient(135deg, rgba(255, 235, 59, 0.25) 0%, rgba(255, 235, 59, 0.0) 80%);
+  transform: rotate(-25deg);
+  animation: sunbeamPulse 4s infinite alternate ease-in-out;
+}
+
+@keyframes sunbeamPulse {
+  0% { opacity: 0.25; transform: rotate(-25deg) scaleX(1); }
+  100% { opacity: 0.55; transform: rotate(-22deg) scaleX(1.15); }
+}
+
+.particle-spooky {
+  font-size: 1.1rem;
+  animation: spookyFloat 5s infinite ease-in-out;
+}
+
+@keyframes spookyFloat {
+  0% { transform: translate(0, 0) scale(0.9); opacity: 0.4; }
+  50% { transform: translate(15px, -30px) scale(1.1); opacity: 0.85; }
+  100% { transform: translate(-15px, -60px) scale(0.9); opacity: 0; }
+}
+
+/* Seasonal Room Background Overrides */
+.play-space.season-spring {
+  background: linear-gradient(180deg, #fce4ec 0%, #f8bbd0 50%, #e1bee7 100%) !important;
+}
+
+.play-space.season-summer {
+  background: linear-gradient(180deg, #b3e5fc 0%, #81d4fa 50%, #ffcc80 100%) !important;
+}
+
+.play-space.season-autumn {
+  background: linear-gradient(180deg, #ffe0b2 0%, #ffb74d 50%, #d7ccc8 100%) !important;
+}
+
+.play-space.season-winter {
+  background: linear-gradient(180deg, #e0f7fa 0%, #b2ebf2 50%, #b0bec5 100%) !important;
+}
+
+.play-space.season-halloween {
+  background: linear-gradient(180deg, #311b92 0%, #4a148c 50%, #1a237e 100%) !important;
+}
+
+/* 🎁 KITTEN WINTER WISHLIST BUBBLE STYLES */
+.cat-wishlist-bubble {
+  position: absolute;
+  background: #ffffff;
+  border: 2px solid #8e24aa;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #4a148c;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 4px 12px rgba(142, 36, 170, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: wishlistFloat 2s infinite ease-in-out alternate;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.cat-wishlist-bubble:hover {
+  transform: scale(1.1) translateY(-3px);
+  background: #f3e5f5;
+  border-color: var(--accent-pink);
+}
+
+@keyframes wishlistFloat {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px); }
+}
