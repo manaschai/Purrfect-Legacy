@@ -7729,7 +7729,7 @@ const ROOM_THEMES = [
   { id: 'pastel', name: '🎀 Cute Pastel Pink', class: 'theme-pastel', desc: 'Sweet pastel pink & mint aesthetic.' }
 ];
 
-let activeDecorTab = 'catalog';
+let activeDecorTab = 'inventory';
 
 function awardRandomCraftingMaterial() {
   if (!state.data) return;
