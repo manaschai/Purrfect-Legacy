@@ -7626,6 +7626,99 @@ const FURNITURE_CATALOG = [
     </svg>`,
     interactionMsg: '🎄 Festive holiday cheer fills the room! Cats purr under the tree.',
     interactionSound: () => { if (typeof audio !== 'undefined' && audio.playCelebrationFanfare) audio.playCelebrationFanfare(); }
+  },
+  {
+    id: 'gacha_disco_aura',
+    name: '🪩 Disco Ball Light Aura',
+    category: 'neon_sign',
+    icon: '🪩',
+    desc: 'Adds a glittering rainbow disco lighting effect to your cat room!',
+    cost: 500,
+    width: 75,
+    height: 75,
+    extraClass: 'disco-ball-spin',
+    svg: `<svg viewBox="0 0 80 80" width="75" height="75"><circle cx="40" cy="40" r="24" fill="#e0e0e0" stroke="#ff80ab" stroke-width="3"/><line x1="40" y1="0" x2="40" y2="16" stroke="#fff" stroke-width="2"/><circle cx="40" cy="40" r="28" fill="none" stroke="#ffd700" stroke-dasharray="4,4" /></svg>`,
+    interactionMsg: '🪩 Rainbow disco lights party night!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'gacha_rocket_bed',
+    name: '🚀 Rocket Ship Cat Capsule',
+    category: 'cat_bed',
+    icon: '🚀',
+    desc: 'A futuristic zero-gravity spaceship sleeping pod for cats!',
+    cost: 500,
+    width: 85,
+    height: 105,
+    svg: `<svg viewBox="0 0 100 120" width="85" height="105"><path d="M 50,10 Q 80,40 80,100 L 20,100 Q 20,40 50,10" fill="#2196f3" stroke="#fff" stroke-width="3"/><circle cx="50" cy="55" r="16" fill="#fff" stroke="#ff9800" stroke-width="3"/></svg>`,
+    interactionMsg: '🚀 Zero-gravity rocket sleep capsule activated!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playMeow) audio.playMeow(); }
+  },
+  {
+    id: 'gacha_ufo_perch',
+    name: '🛸 UFO Floating Cat Perch',
+    category: 'cat_tree',
+    icon: '🛸',
+    desc: 'An antigravity levitating flying saucer cat lounge seat!',
+    cost: 350,
+    width: 90,
+    height: 70,
+    svg: `<svg viewBox="0 0 100 80" width="90" height="70"><ellipse cx="50" cy="50" rx="42" ry="14" fill="#9c27b0" stroke="#e040fb" stroke-width="3"/><path d="M 25,50 Q 50,15 75,50 Z" fill="rgba(255,255,255,0.7)" stroke="#fff" stroke-width="2"/></svg>`,
+    interactionMsg: '🛸 Levitating saucer perch is floating!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'gacha_donut_bed',
+    name: '🍩 Strawberry Glazed Donut Bed',
+    category: 'cat_bed',
+    icon: '🍩',
+    desc: 'Super soft squishy donut plush bed.',
+    cost: 200,
+    width: 80,
+    height: 60,
+    svg: `<svg viewBox="0 0 100 80" width="80" height="60"><ellipse cx="50" cy="45" rx="40" ry="22" fill="#ff4081" stroke="#ad1457" stroke-width="3"/><ellipse cx="50" cy="45" rx="16" ry="8" fill="#8d6e63"/></svg>`,
+    interactionMsg: '🍩 Squishy plush donut bed is so soft!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
+  },
+  {
+    id: 'gacha_cocoa_fountain',
+    name: '☕ Marshmallow Hot Cocoa Fountain',
+    category: 'aquarium',
+    icon: '☕',
+    desc: 'Endless hot chocolate fountain for cold winter days.',
+    cost: 200,
+    width: 65,
+    height: 75,
+    svg: `<svg viewBox="0 0 80 90" width="65" height="75"><rect x="15" y="45" width="50" height="35" rx="6" fill="#795548" stroke="#4e342e" stroke-width="3"/><path d="M 25,45 Q 40,25 55,45 Z" fill="#6d4c41"/><circle cx="40" cy="20" r="6" fill="#fff"/></svg>`,
+    interactionMsg: '☕ Warm sweet hot cocoa fountain is flowing!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playDrinkSound) audio.playDrinkSound(); }
+  },
+  {
+    id: 'gacha_cardboard_fort',
+    name: '📦 Cardboard Castle Fort',
+    category: 'scratching',
+    icon: '📦',
+    desc: 'The ultimate cardboard play castle.',
+    cost: 100,
+    width: 70,
+    height: 70,
+    svg: `<svg viewBox="0 0 90 90" width="70" height="70"><rect x="15" y="25" width="60" height="55" rx="4" fill="#d7ccc8" stroke="#5d4037" stroke-width="3"/><rect x="35" y="50" width="20" height="30" rx="3" fill="#4e342e"/></svg>`,
+    interactionMsg: '📦 Fort cardboard fortress ready for battle!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playMeow) audio.playMeow(); }
+  },
+  {
+    id: 'gacha_galaxy_theme',
+    name: '🌌 Cosmic Galaxy Wall Theme',
+    category: 'neon_sign',
+    icon: '🌌',
+    desc: 'Unlocks the glittering deep space nebula room wallpaper!',
+    cost: 500,
+    width: 70,
+    height: 70,
+    extraClass: 'neon-glow-pulse',
+    svg: `<svg viewBox="0 0 90 90" width="70" height="70"><circle cx="45" cy="45" r="35" fill="#311b92" stroke="#ffd700" stroke-width="3"/><circle cx="30" cy="30" r="4" fill="#fff"/><circle cx="60" cy="55" r="3" fill="#ff4081"/></svg>`,
+    interactionMsg: '🌌 Deep space cosmic galaxy aura!',
+    interactionSound: () => { if (typeof audio !== 'undefined' && audio.playPurrSound) audio.playPurrSound(); }
   }
 ];
 
@@ -8168,6 +8261,51 @@ function renderInventoryAndLayoutGrid(container) {
       card.appendChild(title);
       card.appendChild(posLabel);
       card.appendChild(removeBtn);
+      grid.appendChild(card);
+    });
+  }
+
+  if (state.data.unlockedAccessories && state.data.unlockedAccessories.length > 0) {
+    const accHeader = document.createElement('h4');
+    accHeader.style.gridColumn = '1 / -1';
+    accHeader.style.margin = '20px 0 6px 0';
+    accHeader.style.fontFamily = 'var(--display-font)';
+    accHeader.style.color = '#7b1fa2';
+    accHeader.textContent = `🎰 Unlocked Gacha Wardrobe Accessories (${state.data.unlockedAccessories.length}):`;
+    grid.appendChild(accHeader);
+
+    state.data.unlockedAccessories.forEach(accId => {
+      const gachaItem = typeof GACHA_POOL !== 'undefined' ? GACHA_POOL.find(g => g.id === accId) : null;
+      if (!gachaItem) return;
+
+      const card = document.createElement('div');
+      card.className = 'decor-card';
+      card.style.background = '#f3e5f5';
+      card.style.borderColor = '#ce93d8';
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'decor-card-icon';
+      iconDiv.style.fontSize = '2.2rem';
+      iconDiv.textContent = gachaItem.icon;
+
+      const title = document.createElement('div');
+      title.className = 'decor-card-title';
+      title.textContent = gachaItem.name;
+
+      const equipBtn = document.createElement('button');
+      equipBtn.className = 'btn secondary-btn';
+      equipBtn.style.width = '100%';
+      equipBtn.style.padding = '6px';
+      equipBtn.style.fontSize = '0.8rem';
+      equipBtn.textContent = '👗 Wear in Wardrobe';
+
+      equipBtn.addEventListener('click', () => {
+        openWardrobe();
+      });
+
+      card.appendChild(iconDiv);
+      card.appendChild(title);
+      card.appendChild(equipBtn);
       grid.appendChild(card);
     });
   }
