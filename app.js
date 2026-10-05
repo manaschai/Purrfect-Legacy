@@ -3707,8 +3707,9 @@ document.getElementById('phone-clear-btn').addEventListener('click', () => {
 });
 
 document.getElementById('phone-call-btn').addEventListener('click', () => {
-  const number = document.getElementById('phone-number-field').textContent;
-  if (number === '-') return;
+  const rawNum = document.getElementById('phone-number-field').textContent || '';
+  const number = rawNum.trim();
+  if (number === '-' || !number) return;
 
   const msgDisplay = document.getElementById('phone-message');
   msgDisplay.textContent = 'Calling number...';
@@ -9054,6 +9055,9 @@ function renderGachaResults(prizes) {
 }
 
 function triggerGachaCompanyCall() {
+  const gachaModal = document.getElementById('gacha-modal');
+  if (gachaModal) gachaModal.classList.remove('active');
+
   const gachaCaller = {
     name: "🎰 Gacha Company",
     avatar: "🎰",
@@ -9061,6 +9065,11 @@ function triggerGachaCompanyCall() {
     rewardCoins: 500
   };
   activeIncomingCaller = gachaCaller;
+  
+  const phoneModal = document.getElementById('phone-modal');
+  if (phoneModal) phoneModal.classList.add('active');
+
+  showIncomingCallScreen(gachaCaller);
   startPhoneRingingSound();
   showIncomingCallNotification(gachaCaller);
 }
