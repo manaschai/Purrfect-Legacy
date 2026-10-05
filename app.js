@@ -6119,6 +6119,8 @@ function renderPhoneHomeScreen() {
   
   if (!state.data.installedApps) {
     state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'seasonalspecials', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+  } else if (!state.data.installedApps.includes('seasonalspecials')) {
+    state.data.installedApps.push('seasonalspecials');
   }
   
   grid.innerHTML = '';
@@ -6156,7 +6158,9 @@ function updateMeowglePlayUI() {
   if (!container || !state.data) return;
   
   if (!state.data.installedApps) {
-    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+    state.data.installedApps = ['dialer', 'chat', 'cam', 'cathrome', 'seasonalspecials', 'meowzon', 'gallery', 'bank', 'maps', 'furnish', 'collarmaker', 'play'];
+  } else if (!state.data.installedApps.includes('seasonalspecials')) {
+    state.data.installedApps.push('seasonalspecials');
   }
 
   container.innerHTML = '';
@@ -7725,6 +7729,7 @@ function openDecorStudioModal() {
   const modal = document.getElementById('decor-studio-modal');
   if (modal) modal.classList.add('active');
 }
+window.openDecorStudioModal = openDecorStudioModal;
 
 function renderDecorTabContent(tabName) {
   activeDecorTab = tabName;
@@ -7751,6 +7756,7 @@ function renderDecorTabContent(tabName) {
     renderInventoryAndLayoutGrid(container);
   }
 }
+window.renderDecorTabContent = renderDecorTabContent;
 
 function renderFurnitureShopGrid(container) {
   const grid = document.createElement('div');
