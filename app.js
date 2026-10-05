@@ -991,12 +991,12 @@ class GameState {
         };
       }
 
-      // Sanitize exponential/overflow money bug
-      if (typeof this.data.coins !== 'number' || !Number.isFinite(this.data.coins) || this.data.coins > 99999999) {
-        this.data.coins = 99999;
+      // Sanitize max coins cap to 999,999
+      if (typeof this.data.coins !== 'number' || !Number.isFinite(this.data.coins) || this.data.coins > 999999) {
+        this.data.coins = 999999;
       }
       if (typeof this.data.bankSavings !== 'number' || !Number.isFinite(this.data.bankSavings) || this.data.bankSavings > 999999) {
-        this.data.bankSavings = 25000;
+        this.data.bankSavings = 999999;
       }
       
       // Calculate offline progress
@@ -1684,9 +1684,9 @@ function initGameScreen() {
 let lastKnownCoins = null;
 function updateHeaderStats() {
   if (state.data) {
-    // Sanitize overflow if present at runtime
-    if (typeof state.data.coins !== 'number' || !Number.isFinite(state.data.coins) || state.data.coins > 99999999) {
-      state.data.coins = 99999;
+    // Sanitize max coins cap to 999,999
+    if (typeof state.data.coins !== 'number' || !Number.isFinite(state.data.coins) || state.data.coins > 999999) {
+      state.data.coins = 999999;
     }
     if (lastKnownCoins !== null && state.data.coins > lastKnownCoins) {
       const diff = state.data.coins - lastKnownCoins;
