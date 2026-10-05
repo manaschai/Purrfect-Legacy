@@ -7366,8 +7366,22 @@ function tickWorkingCats() {
           }, 80);
         }
         
-        showToast(`💼 completed work: ${cat.name} completed ${job.name} and earned ${job.reward} 🪙!`);
+        showToast(`💼 ${cat.name} completed ${job.name} and earned ${job.reward} 🪙!`);
         
+        // Check for Workplace Injury (~18% chance)
+        if (Math.random() < 0.18) {
+          if (state.data.kittyInsurance === 'vip') {
+            cat.isInjured = false;
+            showToast(`🚑 Purr-Care VIP Workplace Claim Approved: Auto-healed ${cat.name}'s paw injury for 0 🪙!`);
+          } else if (state.data.kittyInsurance === 'basic') {
+            cat.isInjured = true;
+            showToast(`⚠️ Ouch! ${cat.name} got a workplace injury (🩹 Paw Sprain) working at ${job.name}! Covered 100% by Purr-Care Basic Shield! 🏥`);
+          } else {
+            cat.isInjured = true;
+            showToast(`⚠️ Ouch! ${cat.name} got a workplace injury (🩹 Paw Sprain) working at ${job.name}! Take them to Whisker Vet Clinic. 🏥`);
+          }
+        }
+
         delete cat.activeJob;
         delete cat.jobTimeLeft;
         changed = true;
