@@ -7749,6 +7749,12 @@ function openDecorStudioModal() {
 }
 window.openDecorStudioModal = openDecorStudioModal;
 
+function openDecorInventoryModal() {
+  openDecorStudioModal();
+  renderDecorTabContent('inventory');
+}
+window.openDecorInventoryModal = openDecorInventoryModal;
+
 function renderDecorTabContent(tabName) {
   activeDecorTab = tabName;
   document.querySelectorAll('.decor-tab-btn').forEach(btn => {
