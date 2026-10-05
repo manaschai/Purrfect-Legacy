@@ -2630,13 +2630,16 @@ document.getElementById('breed-next-generation-btn').addEventListener('click', (
 });
 
 
-// --- COZY PET SHOP VIEW LOGIC ---
+function openShopModal() {
+  renderShopItems();
+  const shopModal = document.getElementById('shop-modal');
+  if (shopModal) shopModal.classList.add('active');
+}
+window.openShopModal = openShopModal;
+
 const shopModal = document.getElementById('shop-modal');
 
-document.getElementById('open-shop-btn').addEventListener('click', () => {
-  renderShopItems();
-  shopModal.classList.add('active');
-});
+document.getElementById('open-shop-btn').addEventListener('click', openShopModal);
 
 function renderShopItems() {
   const container = document.getElementById('shop-items-grid');
@@ -2735,10 +2738,14 @@ let minigameTimerInterval = null;
 let minigameMouseTimeout = null;
 let minigameSpeed = 1000; // ms per jump
 
-document.getElementById('open-minigame-btn').addEventListener('click', () => {
-  minigameModal.classList.add('active');
+function openMinigameModal() {
+  const minigameModal = document.getElementById('minigame-modal');
+  if (minigameModal) minigameModal.classList.add('active');
   resetMinigameUI();
-});
+}
+window.openMinigameModal = openMinigameModal;
+
+document.getElementById('open-minigame-btn').addEventListener('click', openMinigameModal);
 
 function resetMinigameUI() {
   minigameActive = false;
@@ -2845,10 +2852,14 @@ function endMinigame() {
 // --- FAMILY TREE LINEAGE SYSTEM ---
 const familyModal = document.getElementById('family-tree-modal');
 
-document.getElementById('open-family-tree-btn').addEventListener('click', () => {
+function openFamilyTreeModal() {
   renderFamilyTree();
-  familyModal.classList.add('active');
-});
+  const familyModal = document.getElementById('family-tree-modal');
+  if (familyModal) familyModal.classList.add('active');
+}
+window.openFamilyTreeModal = openFamilyTreeModal;
+
+document.getElementById('open-family-tree-btn').addEventListener('click', openFamilyTreeModal);
 
 function renderFamilyTree() {
   const container = document.getElementById('family-tree-scroller');
@@ -2943,6 +2954,12 @@ function openCalendar() {
   renderVacationPanel();
   calendarModal.classList.add('active');
 }
+
+function openCalendarModal() {
+  openCalendar();
+}
+window.openCalendarModal = openCalendarModal;
+window.openCalendar = openCalendar;
 
 document.getElementById('open-calendar-btn').addEventListener('click', openCalendar);
 const headerDateBadge = document.getElementById('header-date-badge');
@@ -3110,6 +3127,9 @@ function openWardrobe() {
   dressingCatIndex = 0;
   selectedAccessoryCategory = 'hat';
   
+  const modal = document.getElementById('wardrobe-modal');
+  if (modal) modal.classList.add('active');
+  
   const select = document.getElementById('wardrobe-cat-select');
   select.innerHTML = '';
   state.data.activeCats.forEach((cat, idx) => {
@@ -3263,6 +3283,7 @@ function renderAccessoryColors() {
   });
 }
 
+window.openWardrobe = openWardrobe;
 document.getElementById('open-wardrobe-btn').addEventListener('click', openWardrobe);
 
 document.getElementById('accessory-remove-btn').addEventListener('click', () => {
